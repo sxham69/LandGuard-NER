@@ -1,8 +1,16 @@
-.venv/
+# Environment / secrets
+.env
+.env.*
+!.env.example
+
+# Python
 __pycache__/
-*.pyc
-*.pyo
-.pytest_cache/
-data/landslideguard.db
-data/uploads/*
-!data/uploads/.gitkeep
+*.py[cod]
+.venv/
+venv/
+
+# Streamlit
+.streamlit/secrets.toml
+
+# OS
+.DS_Store
