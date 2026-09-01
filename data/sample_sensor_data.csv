@@ -1,0 +1,6 @@
+timestamp,district,rainfall24_mm,rainfall72_mm,soil_moisture_pct,slope_deg,elevation_m,ndvi,road_distance_m,historical_density
+2026-08-31T12:00:00,Aizawl,92.4,241.2,78.1,38.5,1180,0.61,140,5.2
+2026-08-31T12:00:00,Gangtok,55.2,142.7,63.4,31.2,1760,0.72,280,2.1
+2026-08-31T12:00:00,Shillong,118.6,311.4,84.7,42.1,1495,0.55,95,6.4
+2026-08-31T12:00:00,Itanagar,76.1,190.2,70.8,35.8,610,0.68,210,4.0
+2026-08-31T12:00:00,Kohima,84.5,205.1,75.0,36.8,1440,0.58,175,4.8
