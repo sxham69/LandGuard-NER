@@ -1,3 +1,4 @@
+import html
 import os
 import re
 import smtplib
@@ -544,7 +545,9 @@ def command_header(show_ticker=True):
     if show_ticker:
         alerts = get_alerts()
         text = "  •  ".join(
-            f"{a.get('risk_level','ALERT')} ALERT: {a.get('district','NER')} — {a.get('message','Operational warning')}"
+            f"{html.escape(str(a.get('risk_level','ALERT')))} ALERT: "
+            f"{html.escape(str(a.get('district','NER')))} — "
+            f"{html.escape(str(a.get('message','Operational warning')))}"
             for a in alerts[-5:]
         )
         if not text:
@@ -996,10 +999,10 @@ elif page == "Mobile Alert Preview":
 
     st.markdown("### Emergency notification feed")
     for a in reversed(alerts[-5:]):
-        lvl = a.get("risk_level", "MODERATE")
-        district = a.get("district", "NER")
-        created = a.get("created_at", "NOW")
-        message = a.get("message", "Follow official emergency instructions.")
+        lvl = html.escape(str(a.get("risk_level", "MODERATE")))
+        district = html.escape(str(a.get("district", "NER")))
+        created = html.escape(str(a.get("created_at", "NOW")))
+        message = html.escape(str(a.get("message", "Follow official emergency instructions.")))
         st.markdown(
             f'''<div style="max-width:760px;background:#071018;border:1px solid #30485c;border-radius:28px;padding:20px 22px;margin:0 0 16px;box-shadow:0 16px 40px rgba(0,0,0,.30)">
             <div style="display:flex;justify-content:space-between;align-items:center"><span class="small">STATE EOC • {created}</span><span class="riskbadge {lvl}">{lvl}</span></div>
