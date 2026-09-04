@@ -10,7 +10,7 @@
 
 ### 👥 Contributors
 
-| [<img src="https://cdn-icons-png.flaticon.com/512/25/25231.png" width="100px;"/>](https://github.com/sxham69/LandGuard-NER/)|
+| [<img src="https://cdn-icons-png.flaticon.com/512/25/25231.png" width="100px;"/>](https://github.com/sxham69/LandGuard-NER/)| |
 | :---: | :---: |
 | [Parijat Kumar](https://github.com/Parijat-45) 
 
