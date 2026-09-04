@@ -8,6 +8,19 @@
 
 ---
 
+---
+
+## 👥 Core Contributors & Team
+
+Meet the team behind **LandslideGuard NER** built for SIH 2026.
+
+| Contributor | Role & Focus Area | GitHub / Socials |
+| :---: | :--- | :---: |
+| <img src="https://github.com/github.png" width="80" style="border-radius:50%"><br>**[Member Name]** | **Team Lead & ML Architect**<br>• Designed dynamic risk fusion engine<br>• XAI & Digital Twin integration | [![GitHub](https://img.shields.io/badge/GitHub-100000?style=for-the-badge&logo=github&logoColor=white)](https://github.com/) [![LinkedIn](https://img.shields.io/badge/LinkedIn-0077B5?style=for-the-badge&logo=linkedin&logoColor=white)](https://linkedin.com/) |
+| <img src="https://github.com/github.png" width="80" style="border-radius:50%"><br>**[Member Name]** | **Backend & API Systems**<br>• FastAPI microservices & SQLite schema<br>• Multilingual emergency dispatch pipeline | [![GitHub](https://img.shields.io/badge/GitHub-100000?style=for-the-badge&logo=github&logoColor=white)](https://github.com/) [![LinkedIn](https://img.shields.io/badge/LinkedIn-0077B5?style=for-the-badge&logo=linkedin&logoColor=white)](https://linkedin.com/) |
+| <img src="https://github.com/github.png" width="80" style="border-radius:50%"><br>**[Member Name]** | **Frontend & Command Center UI**<br>• Streamlit EOC dashboard<br>• Offline-first UI resilience & mobile previews | [![GitHub](https://img.shields.io/badge/GitHub-100000?style=for-the-badge&logo=github&logoColor=white)](https://github.com/) [![LinkedIn](https://img.shields.io/badge/LinkedIn-0077B5?style=for-the-badge&logo=linkedin&logoColor=white)](https://linkedin.com/) |
+| <img src="https://github.com/github.png" width="80" style="border-radius:50%"><br>**[Member Name]** | **GIS & Geospatial Data Engineer**<br>• NER terrain & slope mapping<br>• Environmental & satellite data pipelines | [![GitHub](https://img.shields.io/badge/GitHub-100000?style=for-the-badge&logo=github&logoColor=white)](https://github.com/) [![LinkedIn](https://img.shields.io/badge/LinkedIn-0077B5?style=for-the-badge&logo=linkedin&logoColor=white)](https://linkedin.com/) |
+
 
 ## 1. Why this can stand out
 
