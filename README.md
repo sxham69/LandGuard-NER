@@ -14,7 +14,6 @@
 Thanks to all the team members and collaborators who built **LandslideGuard NER**:
 
 <a href="https://github.com/sxham69/LandGuard-NER/graphs/contributors">
-  <img src="https://contrib.rocks/image?repo=sxham69/LandGuard-NER" alt="LandslideGuard NER Contributors" />
 </a>
 
 <br>
