@@ -8,18 +8,25 @@
 
 ---
 
-## 👥 Core Contributors & Team
 
-Meet the team behind **LandslideGuard NER** built for SIH 2026.
+## 👥 Contributors
 
-| Contributor | Role & Focus Area | GitHub / Socials |
-| :---: | :--- | :---: |
-| <img src="https://github.com/sxham69.png" width="80" style="border-radius:50%"><br>**Soham Samanta** | **Team Lead & ML Architect**<br>• Designed dynamic risk fusion engine (`risk_engine.py`) & XAI Digital Twin<br>• Engineered uncertainty-aware scoring & incident photo triage (`incident_ai.py`) | [![GitHub](https://img.shields.io/badge/GitHub-100000?style=for-the-badge&logo=github&logoColor=white)](https://github.com/sxham69) [![LinkedIn](https://img.shields.io/badge/LinkedIn-0077B5?style=for-the-badge&logo=linkedin&logoColor=white)](https://linkedin.com/) |
-| <img src="https://github.com/garimagiri028.png" width="80" style="border-radius:50%"><br>**Garima Giri** | **Lead Backend & Systems Engineer**<br>• Developed core FastAPI service layer (`backend/api.py`) & SQLite persistence<br>• Built SMTP broadcast integration & offline-first data engines (`data_engine.py`) | [![GitHub](https://img.shields.io/badge/GitHub-100000?style=for-the-badge&logo=github&logoColor=white)](https://github.com/) [![LinkedIn](https://img.shields.io/badge/LinkedIn-0077B5?style=for-the-badge&logo=linkedin&logoColor=white)](https://linkedin.com/) |
-| <img src="https://github.com/github.png" width="80" style="border-radius:50%"><br>**[Member Name]** | **Backend & Dispatch Engineer**<br>• Built multilingual alert engine (English, Assamese, Bengali, Hindi, Nepali)<br>• Engineered audit log persistence & emergency dispatch API endpoints | [![GitHub](https://img.shields.io/badge/GitHub-100000?style=for-the-badge&logo=github&logoColor=white)](https://github.com/) [![LinkedIn](https://img.shields.io/badge/LinkedIn-0077B5?style=for-the-badge&logo=linkedin&logoColor=white)](https://linkedin.com/) |
-| <img src="https://github.com/github.png" width="80" style="border-radius:50%"><br>**[Member Name]** | **Lead Frontend & UX Architect**<br>• Designed Streamlit State EOC Command Center UI (`frontend/app.py`)<br>• Built dark-theme NER risk map & explainable AI commander briefing view | [![GitHub](https://img.shields.io/badge/GitHub-100000?style=for-the-badge&logo=github&logoColor=white)](https://github.com/) [![LinkedIn](https://img.shields.io/badge/LinkedIn-0077B5?style=for-the-badge&logo=linkedin&logoColor=white)](https://linkedin.com/) |
-| <img src="https://github.com/github.png" width="80" style="border-radius:50%"><br>**[Member Name]** | **Frontend & Resilience UI Engineer**<br>• Built demo-resilient analytics surfaces & mobile alert notification preview<br>• Developed field-intelligence reporting forms & live KPI cards dashboard | [![GitHub](https://img.shields.io/badge/GitHub-100000?style=for-the-badge&logo=github&logoColor=white)](https://github.com/) [![LinkedIn](https://img.shields.io/badge/LinkedIn-0077B5?style=for-the-badge&logo=linkedin&logoColor=white)](https://linkedin.com/) |
-| <img src="https://github.com/github.png" width="80" style="border-radius:50%"><br>**[Member Name]** | **GIS & Geospatial Data Engineer**<br>• Curated North Eastern Region (NER) terrain, slope, and soil-saturation adapters<br>• Integrated road proximity matrix & strategic asset exposure priorities | [![GitHub](https://img.shields.io/badge/GitHub-100000?style=for-the-badge&logo=github&logoColor=white)](https://github.com/) [![LinkedIn](https://img.shields.io/badge/LinkedIn-0077B5?style=for-the-badge&logo=linkedin&logoColor=white)](https://linkedin.com/) |
+Thanks to all the team members and collaborators who built **LandslideGuard NER**:
+
+<a href="https://github.com/sxham69/LandGuard-NER/graphs/contributors">
+  <img src="https://contrib.rocks/image?repo=sxham69/LandGuard-NER" alt="LandslideGuard NER Contributors" />
+</a>
+
+<br>
+
+| Contributor | Socials |
+| :---: | :---: |
+| <img src="https://github.com/sxham69.png" width="60" style="border-radius:50%"><br>**[Member Name 1]** | [![GitHub](https://img.shields.io/badge/GitHub-100000?style=for-the-badge&logo=github&logoColor=white)](https://github.com/sxham69) [![LinkedIn](https://img.shields.io/badge/LinkedIn-0077B5?style=for-the-badge&logo=linkedin&logoColor=white)](https://linkedin.com/) |
+| <img src="https://github.com/github.png" width="60" style="border-radius:50%"><br>**[Member Name 2]** | [![GitHub](https://img.shields.io/badge/GitHub-100000?style=for-the-badge&logo=github&logoColor=white)](https://github.com/) [![LinkedIn](https://img.shields.io/badge/LinkedIn-0077B5?style=for-the-badge&logo=linkedin&logoColor=white)](https://linkedin.com/) |
+| <img src="https://github.com/github.png" width="60" style="border-radius:50%"><br>**[Member Name 3]** | [![GitHub](https://img.shields.io/badge/GitHub-100000?style=for-the-badge&logo=github&logoColor=white)](https://github.com/) [![LinkedIn](https://img.shields.io/badge/LinkedIn-0077B5?style=for-the-badge&logo=linkedin&logoColor=white)](https://linkedin.com/) |
+| <img src="https://github.com/github.png" width="60" style="border-radius:50%"><br>**[Member Name 4]** | [![GitHub](https://img.shields.io/badge/GitHub-100000?style=for-the-badge&logo=github&logoColor=white)](https://github.com/) [![LinkedIn](https://img.shields.io/badge/LinkedIn-0077B5?style=for-the-badge&logo=linkedin&logoColor=white)](https://linkedin.com/) |
+| <img src="https://github.com/github.png" width="60" style="border-radius:50%"><br>**[Member Name 5]** | [![GitHub](https://img.shields.io/badge/GitHub-100000?style=for-the-badge&logo=github&logoColor=white)](https://github.com/) [![LinkedIn](https://img.shields.io/badge/LinkedIn-0077B5?style=for-the-badge&logo=linkedin&logoColor=white)](https://linkedin.com/) |
+| <img src="https://github.com/github.png" width="60" style="border-radius:50%"><br>**[Member Name 6]** | [![GitHub](https://img.shields.io/badge/GitHub-100000?style=for-the-badge&logo=github&logoColor=white)](https://github.com/) [![LinkedIn](https://img.shields.io/badge/LinkedIn-0077B5?style=for-the-badge&logo=linkedin&logoColor=white)](https://linkedin.com/) |
 
 ## 1. Why this can stand out
 
