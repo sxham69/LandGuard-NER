@@ -8,6 +8,13 @@
 
 ---
 
+### 👥 Contributors
+
+| [<img src="https://github.com" width="100px;"/>](https://github.com) | [<img src="https://github.com" width="100px;"/>](https://github.com) |
+| :---: | :---: |
+| [Parijat Kumar](https://github.com/Parijat-45) 
+
+
 ## 1. Why this can stand out
 
 Most disaster dashboards stop at a map and a risk number. LandslideGuard builds a complete operational loop:
