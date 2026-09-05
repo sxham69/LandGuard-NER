@@ -107,6 +107,7 @@ CSS_TEMPLATE = Template(
     <style>
     html,body,[class*=css]{font-family:Inter,sans-serif}
     .stApp{background:$bg;color:$text}
+    .stApp label,.stApp [data-testid="stWidgetLabel"] p,.stApp [data-testid="stCaptionContainer"] p,.stApp [data-testid="stMetricLabel"],.stApp [data-testid="stMetricValue"],.stApp [data-testid="stMetricDelta"],.stApp [data-testid="stAlertContentInfo"] p,.stApp [data-testid="stAlertContentWarning"] p,.stApp [data-testid="stAlertContentSuccess"] p,.stApp [data-testid="stAlertContentError"] p,.stApp button p,.stApp [data-baseweb="select"] div,.stApp [data-testid="stDataFrame"] *{color:$text !important}
     .block-container{padding-top:1rem;max-width:1500px}
     h1,h2,h3{font-family:"Space Grotesk",sans-serif}
     section[data-testid=stSidebar]{background:$sidebar_bg;border-right:1px solid $sidebar_border}
