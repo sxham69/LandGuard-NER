@@ -581,11 +581,11 @@ if page == "Command Center":
 
     cols = st.columns(5)
     kpis = [
-        ("MONITORED ZONES", len(zones), "8-state regional watch", "cyan"),
-        ("HIGH / CRITICAL", sum(x in ("HIGH", "CRITICAL") for x in levels), "priority surveillance", "red"),
-        ("CRITICAL", levels.count("CRITICAL"), "immediate review", "red"),
-        ("FIELD REPORTS", len(incidents), "human verification", "amber"),
-        ("ALERTS LOGGED", len(alerts), "auditable broadcasts", "cyan"),
+        ("MONITORED ZONES", len(zones), "8-STATE REGIONAL WATCH", "cyan"),
+        ("HIGH / CRITICAL", sum(x in ("HIGH", "CRITICAL") for x in levels), "PRIORITY SURVEILLANCE", "red"),
+        ("CRITICAL", levels.count("CRITICAL"), "IMMEDIATE REVIEW", "red"),
+        ("FIELD REPORTS", len(incidents), "HUMAN VERIFICATION", "amber"),
+        ("ALERTS LOGGED", len(alerts), "AUDITABLE BROADCAST", "cyan"),
     ]
     for col, (lab, val, meta, cls) in zip(cols, kpis):
         col.markdown(f'<div class="kpi {cls}"><div class="label">{lab}</div><div class="value">{val}</div><div class="meta">{meta}</div></div>', unsafe_allow_html=True)
