@@ -6,6 +6,7 @@ import ssl
 from datetime import datetime, timezone
 from email.message import EmailMessage
 from pathlib import Path
+from string import Template
 
 import certifi
 import folium
@@ -27,39 +28,116 @@ try:
 except Exception:
     pass
 
-
 st.set_page_config(
     page_title="LandslideGuard NER • State EOC",
     page_icon="🚨",
     layout="wide",
 )
 
-st.markdown(
+# ------------------------------------------------------------
+# Theme (Dark / Bright) — must be initialized before CSS renders
+# ------------------------------------------------------------
+if "theme" not in st.session_state:
+    st.session_state.theme = "dark"
+
+DARK_COLORS = {
+    "bg": "radial-gradient(circle at 78% 2%,#10365a 0,#071426 38%,#050e1b 100%)",
+    "text": "#e8f1f8",
+    "sidebar_bg": "linear-gradient(180deg,#061323,#091c31)",
+    "sidebar_border": "#1d3a57",
+    "govbar_border": "#1d3a57",
+    "govbar_bg": "rgba(8,28,48,.9)",
+    "emblem_border": "#d8e5ee",
+    "govsub": "#8fa9bd",
+    "live": "#a8c0d2",
+    "dot": "#28d17c",
+    "ticker_border": "#53323a",
+    "ticker_bg": "#1a1620",
+    "ticker_text": "#ffd5da",
+    "kpi_bg": "linear-gradient(145deg,rgba(14,38,64,.96),rgba(7,23,40,.96))",
+    "kpi_border": "#1d3a57",
+    "kpi_label": "#8fa9bd",
+    "kpi_meta": "#a6bbcb",
+    "kpi_red_border": "#6b2935",
+    "kpi_cyan_border": "#1a6276",
+    "kpi_amber_border": "#6c5221",
+    "panel_bg": "rgba(10,30,51,.82)",
+    "panel_border": "#1d3a57",
+    "eyebrow": "#29d3ff",
+    "small": "#8fa9bd",
+    "critical_bg": "#541d28", "critical_text": "#ff9da8",
+    "high_bg": "#4d3314", "high_text": "#ffc85e",
+    "moderate_bg": "#463e13", "moderate_text": "#e9db68",
+    "low_bg": "#123a2b", "low_text": "#76e4ac",
+}
+
+LIGHT_COLORS = {
+    "bg": "radial-gradient(circle at 78% 2%,#eef4fa 0,#f7fafc 38%,#ffffff 100%)",
+    "text": "#0f2233",
+    "sidebar_bg": "linear-gradient(180deg,#f3f7fb,#e7edf3)",
+    "sidebar_border": "#c7d6e3",
+    "govbar_border": "#c7d6e3",
+    "govbar_bg": "rgba(255,255,255,.92)",
+    "emblem_border": "#3a5a73",
+    "govsub": "#51677a",
+    "live": "#3d6580",
+    "dot": "#1f9d5c",
+    "ticker_border": "#e3b7bd",
+    "ticker_bg": "#fdeef0",
+    "ticker_text": "#8a2e3a",
+    "kpi_bg": "linear-gradient(145deg,rgba(255,255,255,.97),rgba(238,244,250,.97))",
+    "kpi_border": "#c7d6e3",
+    "kpi_label": "#51677a",
+    "kpi_meta": "#5b7185",
+    "kpi_red_border": "#d69aa6",
+    "kpi_cyan_border": "#8fd0e6",
+    "kpi_amber_border": "#e0c584",
+    "panel_bg": "rgba(255,255,255,.88)",
+    "panel_border": "#c7d6e3",
+    "eyebrow": "#0a7ea8",
+    "small": "#5b7185",
+    "critical_bg": "#fbdde1", "critical_text": "#8a1f30",
+    "high_bg": "#fbe7cd", "high_text": "#8a5a10",
+    "moderate_bg": "#f7f0c4", "moderate_text": "#6b5c0c",
+    "low_bg": "#d8f3e6", "low_text": "#14663f",
+}
+
+CSS_TEMPLATE = Template(
     """
     <style>
     html,body,[class*=css]{font-family:Inter,sans-serif}
-    .stApp{background:radial-gradient(circle at 78% 2%,#10365a 0,#071426 38%,#050e1b 100%);color:#e8f1f8}
+    .stApp{background:$bg;color:$text}
     .block-container{padding-top:1rem;max-width:1500px}
     h1,h2,h3{font-family:"Space Grotesk",sans-serif}
-    section[data-testid=stSidebar]{background:linear-gradient(180deg,#061323,#091c31);border-right:1px solid #1d3a57}
-    .govbar{display:flex;align-items:center;justify-content:space-between;padding:10px 16px;border:1px solid #1d3a57;background:rgba(8,28,48,.9);border-radius:10px;margin-bottom:10px}
-    .govbrand{display:flex;gap:12px;align-items:center}.emblem{width:38px;height:38px;border-radius:50%;border:2px solid #d8e5ee;display:grid;place-items:center}
-    .govtitle{font-weight:800;font-size:14px}.govsub{font-size:10px;color:#8fa9bd}.live{font-size:10px;color:#a8c0d2;text-transform:uppercase;letter-spacing:.08em}
-    .dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:#28d17c}
-    .ticker{overflow:hidden;white-space:nowrap;border:1px solid #53323a;background:#1a1620;border-radius:8px;padding:8px 0;margin:8px 0 16px;color:#ffd5da;font-size:12px}
+    section[data-testid=stSidebar]{background:$sidebar_bg;border-right:1px solid $sidebar_border}
+    .govbar{display:flex;align-items:center;justify-content:space-between;padding:10px 16px;border:1px solid $govbar_border;background:$govbar_bg;border-radius:10px;margin-bottom:10px}
+    .govbrand{display:flex;gap:12px;align-items:center}.emblem{width:38px;height:38px;border-radius:50%;border:2px solid $emblem_border;display:grid;place-items:center}
+    .govtitle{font-weight:800;font-size:14px;color:$text}.govsub{font-size:10px;color:$govsub}.live{font-size:10px;color:$live;text-transform:uppercase;letter-spacing:.08em}
+    .dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:$dot}
+    .ticker{overflow:hidden;white-space:nowrap;border:1px solid $ticker_border;background:$ticker_bg;border-radius:8px;padding:8px 0;margin:8px 0 16px;color:$ticker_text;font-size:12px}
     .ticker span{display:inline-block;padding-left:100%;animation:marquee 28s linear infinite}@keyframes marquee{to{transform:translateX(-100%)}}
-    .kpi{background:linear-gradient(145deg,rgba(14,38,64,.96),rgba(7,23,40,.96));border:1px solid #1d3a57;border-radius:13px;padding:14px 16px;min-height:104px;box-shadow:0 12px 35px rgba(0,0,0,.18)}
-    .kpi .label{font-size:10px;color:#8fa9bd;letter-spacing:.1em;font-weight:800}.kpi .value{font-size:29px;font-weight:700;margin:6px 0}.kpi .meta{font-size:11px;color:#a6bbcb}
-    .kpi.red{border-color:#6b2935}.kpi.cyan{border-color:#1a6276}.kpi.amber{border-color:#6c5221}
-    .panel{background:rgba(10,30,51,.82);border:1px solid #1d3a57;border-radius:14px;padding:16px;box-shadow:0 10px 30px rgba(0,0,0,.16)}
-    .eyebrow{font-size:10px;color:#29d3ff;font-weight:800;letter-spacing:.12em;text-transform:uppercase}.small{font-size:11px;color:#8fa9bd}
+    .kpi{background:$kpi_bg;border:1px solid $kpi_border;border-radius:13px;padding:14px 16px;min-height:104px;box-shadow:0 12px 35px rgba(0,0,0,.18)}
+    .kpi .label{font-size:10px;color:$kpi_label;letter-spacing:.1em;font-weight:800}.kpi .value{font-size:29px;font-weight:700;margin:6px 0;color:$text}.kpi .meta{font-size:11px;color:$kpi_meta}
+    .kpi.red{border-color:$kpi_red_border}.kpi.cyan{border-color:$kpi_cyan_border}.kpi.amber{border-color:$kpi_amber_border}
+    .panel{background:$panel_bg;border:1px solid $panel_border;border-radius:14px;padding:16px;box-shadow:0 10px 30px rgba(0,0,0,.16)}
+    .panel,.panel b,.panel p{color:$text}
+    .eyebrow{font-size:10px;color:$eyebrow;font-weight:800;letter-spacing:.12em;text-transform:uppercase}.small{font-size:11px;color:$small}
     .riskbadge{display:inline-block;padding:5px 9px;border-radius:999px;font-size:10px;font-weight:800}
-    .CRITICAL{background:#541d28;color:#ff9da8}.HIGH{background:#4d3314;color:#ffc85e}.MODERATE{background:#463e13;color:#e9db68}.LOW{background:#123a2b;color:#76e4ac}
-    .scanline{height:2px;background:linear-gradient(90deg,transparent,#29d3ff,transparent)}
+    .CRITICAL{background:$critical_bg;color:$critical_text}.HIGH{background:$high_bg;color:$high_text}.MODERATE{background:$moderate_bg;color:$moderate_text}.LOW{background:$low_bg;color:$low_text}
+    .scanline{height:2px;background:linear-gradient(90deg,transparent,$eyebrow,transparent)}
     </style>
-    """,
-    unsafe_allow_html=True,
+    """
 )
+
+
+def render_theme_css(theme):
+    """Render the global stylesheet for the active theme ('dark' or 'light')."""
+    colors = DARK_COLORS if theme == "dark" else LIGHT_COLORS
+    st.markdown(CSS_TEMPLATE.safe_substitute(colors), unsafe_allow_html=True)
+
+
+render_theme_css(st.session_state.theme)
+
 
 # ------------------------------------------------------------
 # Demo data: these make Analytics and Mobile Preview NEVER empty.
@@ -557,10 +635,22 @@ def command_header(show_ticker=True):
 
 st.sidebar.title("⛰️ LANDSLIDEGUARD NER")
 st.sidebar.caption("SIH 2026 • Problem 26001")
+
+is_light = st.sidebar.toggle(
+    "☀️ Bright mode",
+    value=(st.session_state.theme == "light"),
+    key="theme_toggle",
+)
+new_theme = "light" if is_light else "dark"
+if new_theme != st.session_state.theme:
+    st.session_state.theme = new_theme
+    st.rerun()
+
 page = st.sidebar.radio(
     "COMMAND MODULES",
     ["Command Center", "AI Digital Twin", "Risk Map", "Field Intelligence", "Alert Center", "Mobile Alert Preview", "Analytics", "About"],
 )
+st.sidebar.divider()
 st.sidebar.divider()
 st.sidebar.success("● NER CONTROL FABRIC ONLINE")
 st.sidebar.caption("Alert gateway: direct email / SMTP")
