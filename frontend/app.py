@@ -110,6 +110,7 @@ CSS_TEMPLATE = Template(
     .block-container{padding-top:1rem;max-width:1500px}
     h1,h2,h3{font-family:"Space Grotesk",sans-serif}
     section[data-testid=stSidebar]{background:$sidebar_bg;border-right:1px solid $sidebar_border}
+    section[data-testid=stSidebar] h1,section[data-testid=stSidebar] h2,section[data-testid=stSidebar] h3,section[data-testid=stSidebar] p,section[data-testid=stSidebar] label,section[data-testid=stSidebar] span{color:$text !important}
     .govbar{display:flex;align-items:center;justify-content:space-between;padding:10px 16px;border:1px solid $govbar_border;background:$govbar_bg;border-radius:10px;margin-bottom:10px}
     .govbrand{display:flex;gap:12px;align-items:center}.emblem{width:38px;height:38px;border-radius:50%;border:2px solid $emblem_border;display:grid;place-items:center}
     .govtitle{font-weight:800;font-size:14px;color:$text}.govsub{font-size:10px;color:$govsub}.live{font-size:10px;color:$live;text-transform:uppercase;letter-spacing:.08em}
