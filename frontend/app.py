@@ -127,6 +127,7 @@ CSS_TEMPLATE = Template(
     .riskbadge{display:inline-block;padding:5px 9px;border-radius:999px;font-size:10px;font-weight:800}
     .CRITICAL{background:$critical_bg;color:$critical_text}.HIGH{background:$high_bg;color:$high_text}.MODERATE{background:$moderate_bg;color:$moderate_text}.LOW{background:$low_bg;color:$low_text}
     .scanline{height:2px;background:linear-gradient(90deg,transparent,$eyebrow,transparent)}
+    header[data-testid="stHeader"]{background:transparent}
     </style>
     """
 )
