@@ -601,7 +601,7 @@ if page == "Command Center":
     ])
     st.markdown("### Regional situation board")
     st.dataframe(df.sort_values("Priority", ascending=False), use_container_width=True, hide_index=True)
-    st.info("Decision principle: **hazard probability × exposure = operational priority**.")
+    st.info("Decision principle: **HAZARD PROBABILITY × EXPOSURE = OPERATIONAL PRIORITY**.")
 
 # ------------------------------------------------------------
 # Digital Twin
