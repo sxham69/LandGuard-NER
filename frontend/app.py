@@ -146,7 +146,6 @@ CSS_TEMPLATE = Template(
     .kpi:hover{transform:translateY(-4px) scale(1.02);box-shadow:0 18px 42px rgba(0,0,0,.28)}
     .panel{transition:transform .2s ease}
     .panel:hover{transform:translateY(-2px)}
-    @keyframes fadeInUp{0%{opacity:0;transform:translateY(14px)}100%{opacity:1;transform:translateY(0)}}
     .kpi .label{font-size:10px;color:$kpi_label;letter-spacing:.1em;font-weight:800}.kpi .value{font-size:29px;font-weight:700;margin:6px 0;color:$text}.kpi .meta{font-size:11px;color:$kpi_meta}
     .kpi.red{border-color:$kpi_red_border}.kpi.cyan{border-color:$kpi_cyan_border}.kpi.amber{border-color:$kpi_amber_border}
     .panel{background:$panel_bg;border:1px solid $panel_border;border-radius:14px;padding:16px;box-shadow:0 10px 30px rgba(0,0,0,.16)}
