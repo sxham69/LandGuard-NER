@@ -971,7 +971,6 @@ elif page == "Risk Map":
         HeatMap(heat_data, radius=55, blur=40, max_zoom=7,
                 gradient={0.2: "#1f9d5c", 0.5: "#e9db68", 0.75: "#ffc85e", 1.0: "#ff4d5e"}
         ).add_to(m)
-    else:
 
         st_folium(
             m,
