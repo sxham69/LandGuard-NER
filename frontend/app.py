@@ -1077,7 +1077,6 @@ elif page == "Alert Center":
     st.caption("This test sends directly through SMTP. No separate backend service is required.")
 
     live_email = st.text_input("Recipient email address", placeholder="your-email@example.com", key="live_email")
-
     live_message = st.text_area(
         "Email message",
         value="LANDSLIDEGUARD NER: DEMO ALERT — Please follow official local disaster-management instructions.",
