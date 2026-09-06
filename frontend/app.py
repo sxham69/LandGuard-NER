@@ -1025,7 +1025,6 @@ elif page == "Alert Center":
         }
         msg = st.text_area("Broadcast message", templates[lang], height=120)
         email_recipients = st.text_input("Email recipients", placeholder="you@example.com, district-control@example.gov")
-        subject = st.text_input("Email subject", value=f"LandslideGuard NER — {level} alert for {district}")
         audit = st.checkbox("Audit log", value=True)
 
         if st.button("AUTHORIZE & DISPATCH ALERT", type="primary"):
