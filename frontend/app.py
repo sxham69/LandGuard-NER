@@ -3,7 +3,6 @@ import os
 import re
 import smtplib
 import ssl
-import urllib.parse
 from datetime import datetime, timezone
 from email.message import EmailMessage
 from pathlib import Path
@@ -123,8 +122,7 @@ CSS_TEMPLATE = Template(
     <style>
     :root,.stApp{--text-color:$text;--background-color:$root_bg;--secondary-background-color:$panel_bg}
     html,body,[class*=css]{font-family:Inter,sans-serif}
-    .stApp{background:$bg;background-size:200% 200%;animation:auroraShift 18s ease infinite;color:$text}
-    @keyframes auroraShift{0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}}
+    .stApp{background:$bg;color:$text}
     .stApp label,.stApp [data-testid="stWidgetLabel"] p,.stApp [data-testid="stCaptionContainer"] p,.stApp [data-testid="stMetricLabel"],.stApp [data-testid="stMetricValue"],.stApp [data-testid="stMetricDelta"],.stApp [data-testid="stAlertContentInfo"] p,.stApp [data-testid="stAlertContentWarning"] p,.stApp [data-testid="stAlertContentSuccess"] p,.stApp [data-testid="stAlertContentError"] p,.stApp button p,.stApp [data-baseweb="select"] div,.stApp [data-testid="stDataFrame"] *{color:$text !important}
     .stApp [data-testid="stCheckbox"] p,.stApp [data-testid="stCheckbox"] span,.stApp [data-testid="stToggle"] p,.stApp [data-testid="stToggle"] span,.stApp [data-testid="stRadio"] p,.stApp [data-testid="stRadio"] span,.stApp [data-testid="stSlider"] div,.stApp [data-testid="stSlider"] span{color:$text !important}
     .stApp input,.stApp [data-testid="stTextInput"] input,.stApp [data-testid="stNumberInput"] input{background:$input_bg !important;color:$text !important;border:1px solid $panel_border !important;-webkit-text-fill-color:$text !important}
@@ -138,19 +136,13 @@ CSS_TEMPLATE = Template(
     h1,h2,h3{font-family:"Space Grotesk",sans-serif}
     section[data-testid=stSidebar]{background:$sidebar_bg;border-right:1px solid $sidebar_border}
     section[data-testid=stSidebar] h1,section[data-testid=stSidebar] h2,section[data-testid=stSidebar] h3,section[data-testid=stSidebar] p,section[data-testid=stSidebar] label,section[data-testid=stSidebar] span{color:$text !important}
-    .govbar{display:flex;align-items:center;justify-content:space-between;padding:10px 16px;border:1px solid $govbar_border;background:$govbar_bg;border-radius:10px;margin-bottom:10px;position:relative;overflow:hidden}
-    .govbar::before{content:"";position:absolute;inset:0;background-image:repeating-linear-gradient(112deg,rgba(120,190,255,.16) 0 2px,transparent 2px 34px),repeating-linear-gradient(112deg,rgba(120,190,255,.08) 0 1px,transparent 1px 18px);animation:rainfall 1.1s linear infinite;pointer-events:none}
-    @keyframes rainfall{0%{background-position:0 0,0 0}100%{background-position:-160px 260px,-90px 180px}}
+    .govbar{display:flex;align-items:center;justify-content:space-between;padding:10px 16px;border:1px solid $govbar_border;background:$govbar_bg;border-radius:10px;margin-bottom:10px}
     .govbrand{display:flex;gap:12px;align-items:center}.emblem{width:38px;height:38px;border-radius:50%;border:2px solid $emblem_border;display:grid;place-items:center}
     .govtitle{font-weight:800;font-size:14px;color:$text}.govsub{font-size:10px;color:$govsub}.live{font-size:10px;color:$live;text-transform:uppercase;letter-spacing:.08em}
     .dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:$dot}
     .ticker{overflow:hidden;white-space:nowrap;border:1px solid $ticker_border;background:$ticker_bg;border-radius:8px;padding:8px 0;margin:8px 0 16px;color:$ticker_text;font-size:12px}
     .ticker span{display:inline-block;padding-left:100%;animation:marquee 28s linear infinite}@keyframes marquee{to{transform:translateX(-100%)}}
-    .kpi{background:$kpi_bg;border:1px solid $kpi_border;border-radius:13px;padding:14px 16px;min-height:104px;box-shadow:0 12px 35px rgba(0,0,0,.18);animation:fadeInUp .5s ease both;transition:transform .2s ease,box-shadow .2s ease}
-    .kpi:hover{transform:translateY(-4px) scale(1.02);box-shadow:0 18px 42px rgba(0,0,0,.28)}
-    .panel{transition:transform .2s ease}
-    .panel:hover{transform:translateY(-2px)}
-    @keyframes fadeInUp{0%{opacity:0;transform:translateY(14px)}100%{opacity:1;transform:translateY(0)}}
+    .kpi{background:$kpi_bg;border:1px solid $kpi_border;border-radius:13px;padding:14px 16px;min-height:104px;box-shadow:0 12px 35px rgba(0,0,0,.18)}
     .kpi .label{font-size:10px;color:$kpi_label;letter-spacing:.1em;font-weight:800}.kpi .value{font-size:29px;font-weight:700;margin:6px 0;color:$text}.kpi .meta{font-size:11px;color:$kpi_meta}
     .kpi.red{border-color:$kpi_red_border}.kpi.cyan{border-color:$kpi_cyan_border}.kpi.amber{border-color:$kpi_amber_border}
     .panel{background:$panel_bg;border:1px solid $panel_border;border-radius:14px;padding:16px;box-shadow:0 10px 30px rgba(0,0,0,.16)}
@@ -159,9 +151,6 @@ CSS_TEMPLATE = Template(
     .riskbadge{display:inline-block;padding:5px 9px;border-radius:999px;font-size:10px;font-weight:800}
     .CRITICAL{background:$critical_bg;color:$critical_text}.HIGH{background:$high_bg;color:$high_text}.MODERATE{background:$moderate_bg;color:$moderate_text}.LOW{background:$low_bg;color:$low_text}
     .scanline{height:2px;background:linear-gradient(90deg,transparent,$eyebrow,transparent)}
-    @keyframes pulseglow{0%{box-shadow:0 0 0 0 rgba(226,75,74,.55)}70%{box-shadow:0 0 0 14px rgba(226,75,74,0)}100%{box-shadow:0 0 0 0 rgba(226,75,74,0)}}
-    .riskbadge.CRITICAL{animation:pulseglow 1.8s ease-out infinite}
-    .kpi.red{animation:pulseglow 2.4s ease-out infinite}
     header[data-testid="stHeader"]{background:transparent}
     header[data-testid="stHeader"] svg{fill:$text !important;color:$text !important}
     header[data-testid="stHeader"] a,header[data-testid="stHeader"] button{color:$text !important}
@@ -699,10 +688,7 @@ page = st.sidebar.radio(
     key="nav_page",
 )
 st.sidebar.divider()
-if st.sidebar.button("🔄 Reset demo data", use_container_width=True):
-    st.session_state.local_alerts = []
-    st.session_state.local_incidents = []
-    st.rerun()
+st.sidebar.divider()
 st.sidebar.success("● NER CONTROL FABRIC ONLINE")
 st.sidebar.caption("Alert gateway: direct email / SMTP")
 st.sidebar.caption("AI model: LG-NER-RF-1.0")
@@ -741,14 +727,7 @@ if page == "Command Center":
         for z in zones
     ])
     st.markdown("### Regional situation board")
-    sorted_df = df.sort_values("Priority", ascending=False)
-    st.dataframe(sorted_df, use_container_width=True, hide_index=True)
-    st.download_button(
-        "⬇️ Download situation board (CSV)",
-        data=sorted_df.to_csv(index=False).encode("utf-8"),
-        file_name=f"landguard_ner_situation_board_{datetime.now(timezone.utc).strftime('%Y%m%d_%H%M')}.csv",
-        mime="text/csv",
-    )
+    st.dataframe(df.sort_values("Priority", ascending=False), use_container_width=True, hide_index=True)
     st.info("Decision principle: **HAZARD PROBABILITY × EXPOSURE = OPERATIONAL PRIORITY**.")
 
 # ------------------------------------------------------------
@@ -1088,7 +1067,6 @@ elif page == "Alert Center":
                 failed = len(results) - sent
                 if sent == len(results):
                     st.success(f'✅ Alert #{out.get("id", "LOCAL")} delivered by email to {sent} recipient(s).')
-                    st.balloons()
                 elif sent:
                     st.warning(f'⚠️ Alert #{out.get("id", "LOCAL")} partially delivered: {sent} sent, {failed} failed.')
                 else:
@@ -1096,12 +1074,6 @@ elif page == "Alert Center":
                 for result in results:
                     if result.get("status") != "SENT":
                         st.error(f'{result.get("to", "Recipient")}: {result.get("error", "Email failed")}')
-
-        st.divider()
-        whatsapp_text = urllib.parse.quote(f"🚨 {level} ALERT — {district}\n\n{msg}")
-        whatsapp_url = f"https://wa.me/?text={whatsapp_text}"
-        st.link_button("📲 Share via WhatsApp", whatsapp_url, use_container_width=True)
-        st.caption("Opens WhatsApp with the alert pre-filled — you pick the contact or group to send it to.")
 
     with right:
         preview = f'''
