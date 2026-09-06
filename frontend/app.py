@@ -898,7 +898,7 @@ elif page == "Risk Map":
         hide_index=True,
     )
 
-    st.markdown("### Interactive risk map")
+    st.markdown("### Interactive Risk Map")
 
     m = folium.Map(
         location=[25.7, 92.5],
