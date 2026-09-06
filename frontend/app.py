@@ -965,26 +965,26 @@ elif page == "Risk Map":
             ),
         ).add_to(m)
 
-show_heatmap = st.checkbox("🔥 SHOW REGIONAL RISK HEATMAP")
-if show_heatmap:
-    heat_data = [[z["lat"], z["lon"], z["risk_score"]] for z in zones]
-    HeatMap(heat_data, radius=55, blur=40, max_zoom=7,
-            gradient={0.2: "#1f9d5c", 0.5: "#e9db68", 0.75: "#ffc85e", 1.0: "#ff4d5e"}
-    ).add_to(m)
-else:
+    show_heatmap = st.checkbox("🔥 SHOW REGIONAL RISK HEATMAP")
+    if show_heatmap:
+        heat_data = [[z["lat"], z["lon"], z["risk_score"]] for z in zones]
+        HeatMap(heat_data, radius=55, blur=40, max_zoom=7,
+                gradient={0.2: "#1f9d5c", 0.5: "#e9db68", 0.75: "#ffc85e", 1.0: "#ff4d5e"}
+        ).add_to(m)
+    else:
 
-    st_folium(
-        m,
-        height=650,
-        width=None,
-        returned_objects=[],
-)
-    st.info(
-        "Scope note: this is live weather-driven risk intelligence. "
-        "OpenWeather weather conditions are real-time/current provider "
-        "data, while slope, history, exposure and the final risk model "
-        "remain prototype components. It is not direct landslide detection."
-)
+        st_folium(
+            m,
+            height=650,
+            width=None,
+            returned_objects=[],
+    )
+        st.info(
+            "Scope note: this is live weather-driven risk intelligence. "
+            "OpenWeather weather conditions are real-time/current provider "
+            "data, while slope, history, exposure and the final risk model "
+            "remain prototype components. It is not direct landslide detection."
+    )
 
 
 # ------------------------------------------------------------
