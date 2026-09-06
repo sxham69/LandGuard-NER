@@ -733,7 +733,7 @@ if page == "Command Center":
         }
         for z in zones
     ])
-    st.markdown("### Regional situation board")
+    st.markdown("### Regional Situation Board")
     st.dataframe(df.sort_values("Priority", ascending=False), use_container_width=True, hide_index=True)
     st.info("Decision principle: **HAZARD PROBABILITY × EXPOSURE = OPERATIONAL PRIORITY**.")
 
