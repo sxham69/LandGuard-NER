@@ -114,7 +114,9 @@ CSS_TEMPLATE = Template(
     .stApp{background:$bg;color:$text}
     .stApp label,.stApp [data-testid="stWidgetLabel"] p,.stApp [data-testid="stCaptionContainer"] p,.stApp [data-testid="stMetricLabel"],.stApp [data-testid="stMetricValue"],.stApp [data-testid="stMetricDelta"],.stApp [data-testid="stAlertContentInfo"] p,.stApp [data-testid="stAlertContentWarning"] p,.stApp [data-testid="stAlertContentSuccess"] p,.stApp [data-testid="stAlertContentError"] p,.stApp button p,.stApp [data-baseweb="select"] div,.stApp [data-testid="stDataFrame"] *{color:$text !important}
     .stApp [data-testid="stCheckbox"] p,.stApp [data-testid="stCheckbox"] span,.stApp [data-testid="stToggle"] p,.stApp [data-testid="stToggle"] span,.stApp [data-testid="stRadio"] p,.stApp [data-testid="stRadio"] span,.stApp [data-testid="stSlider"] div,.stApp [data-testid="stSlider"] span{color:$text !important}
-    .stApp [data-testid="stTextInput"] div[data-baseweb="input"],.stApp [data-testid="stTextArea"] div[data-baseweb="textarea"],.stApp [data-testid="stNumberInput"] div[data-baseweb="input"],.stApp [data-baseweb="select"]>div{background:$input_bg !important;border:1px solid $panel_border !important}
+    .stApp [data-testid="stTextInput"] div[data-baseweb="input"],.stApp [data-testid="stNumberInput"] div[data-baseweb="input"],.stApp [data-baseweb="select"]>div{background:$input_bg !important;border:1px solid $panel_border !important}
+    .stApp [data-testid="stTextInput"] input,.stApp [data-testid="stNumberInput"] input,.stApp [data-baseweb="select"] *{color:$text !important;background:transparent !important}
+    .stApp textarea,.stApp [data-testid="stTextArea"] textarea{background:$input_bg !important;color:$text !important;border:1px solid $panel_border !important;-webkit-text-fill-color:$text !important}
     .stApp [data-testid="stTextInput"] input,.stApp [data-testid="stTextArea"] textarea,.stApp [data-testid="stNumberInput"] input,.stApp [data-baseweb="select"] *{color:$text !important;background:transparent !important}
     .block-container{padding-top:1rem;max-width:1500px}
     h1,h2,h3{font-family:"Space Grotesk",sans-serif}
