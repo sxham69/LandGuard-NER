@@ -64,6 +64,7 @@ DARK_COLORS = {
     "kpi_amber_border": "#6c5221",
     "panel_bg": "rgba(10,30,51,.82)",
     "panel_border": "#1d3a57",
+    "input_bg": "#0a1e33",
     "eyebrow": "#29d3ff",
     "small": "#8fa9bd",
     "critical_bg": "#541d28", "critical_text": "#ff9da8",
@@ -96,6 +97,7 @@ LIGHT_COLORS = {
     "kpi_amber_border": "#e0c584",
     "panel_bg": "rgba(255,255,255,.88)",
     "panel_border": "#c7d6e3",
+    "input_bg": "#ffffff",
     "eyebrow": "#0a7ea8",
     "small": "#5b7185",
     "critical_bg": "#fbdde1", "critical_text": "#8a1f30",
@@ -111,6 +113,9 @@ CSS_TEMPLATE = Template(
     html,body,[class*=css]{font-family:Inter,sans-serif}
     .stApp{background:$bg;color:$text}
     .stApp label,.stApp [data-testid="stWidgetLabel"] p,.stApp [data-testid="stCaptionContainer"] p,.stApp [data-testid="stMetricLabel"],.stApp [data-testid="stMetricValue"],.stApp [data-testid="stMetricDelta"],.stApp [data-testid="stAlertContentInfo"] p,.stApp [data-testid="stAlertContentWarning"] p,.stApp [data-testid="stAlertContentSuccess"] p,.stApp [data-testid="stAlertContentError"] p,.stApp button p,.stApp [data-baseweb="select"] div,.stApp [data-testid="stDataFrame"] *{color:$text !important}
+    .stApp [data-testid="stCheckbox"] p,.stApp [data-testid="stCheckbox"] span,.stApp [data-testid="stToggle"] p,.stApp [data-testid="stToggle"] span,.stApp [data-testid="stRadio"] p,.stApp [data-testid="stRadio"] span,.stApp [data-testid="stSlider"] div,.stApp [data-testid="stSlider"] span{color:$text !important}
+    .stApp [data-testid="stTextInput"] div[data-baseweb="input"],.stApp [data-testid="stTextArea"] div[data-baseweb="textarea"],.stApp [data-testid="stNumberInput"] div[data-baseweb="input"],.stApp [data-baseweb="select"]>div{background:$input_bg !important;border:1px solid $panel_border !important}
+    .stApp [data-testid="stTextInput"] input,.stApp [data-testid="stTextArea"] textarea,.stApp [data-testid="stNumberInput"] input,.stApp [data-baseweb="select"] *{color:$text !important;background:transparent !important}
     .block-container{padding-top:1rem;max-width:1500px}
     h1,h2,h3{font-family:"Space Grotesk",sans-serif}
     section[data-testid=stSidebar]{background:$sidebar_bg;border-right:1px solid $sidebar_border}
