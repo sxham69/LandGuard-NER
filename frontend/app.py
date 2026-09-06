@@ -151,6 +151,9 @@ CSS_TEMPLATE = Template(
     .riskbadge{display:inline-block;padding:5px 9px;border-radius:999px;font-size:10px;font-weight:800}
     .CRITICAL{background:$critical_bg;color:$critical_text}.HIGH{background:$high_bg;color:$high_text}.MODERATE{background:$moderate_bg;color:$moderate_text}.LOW{background:$low_bg;color:$low_text}
     .scanline{height:2px;background:linear-gradient(90deg,transparent,$eyebrow,transparent)}
+    @keyframes pulseglow{0%{box-shadow:0 0 0 0 rgba(226,75,74,.55)}70%{box-shadow:0 0 0 14px rgba(226,75,74,0)}100%{box-shadow:0 0 0 0 rgba(226,75,74,0)}}
+    .riskbadge.CRITICAL{animation:pulseglow 1.8s ease-out infinite}
+    .kpi.red{animation:pulseglow 2.4s ease-out infinite}
     header[data-testid="stHeader"]{background:transparent}
     header[data-testid="stHeader"] svg{fill:$text !important;color:$text !important}
     header[data-testid="stHeader"] a,header[data-testid="stHeader"] button{color:$text !important}
