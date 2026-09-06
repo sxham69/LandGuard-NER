@@ -142,7 +142,6 @@ CSS_TEMPLATE = Template(
     .dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:$dot}
     .ticker{overflow:hidden;white-space:nowrap;border:1px solid $ticker_border;background:$ticker_bg;border-radius:8px;padding:8px 0;margin:8px 0 16px;color:$ticker_text;font-size:12px}
     .ticker span{display:inline-block;padding-left:100%;animation:marquee 28s linear infinite}@keyframes marquee{to{transform:translateX(-100%)}}
-    .kpi{background:$kpi_bg;border:1px solid $kpi_border;border-radius:13px;padding:14px 16px;min-height:104px;box-shadow:0 12px 35px rgba(0,0,0,.18)}
     .kpi{background:$kpi_bg;border:1px solid $kpi_border;border-radius:13px;padding:14px 16px;min-height:104px;box-shadow:0 12px 35px rgba(0,0,0,.18);animation:fadeInUp .5s ease both;transition:transform .2s ease,box-shadow .2s ease}
     .kpi:hover{transform:translateY(-4px) scale(1.02);box-shadow:0 18px 42px rgba(0,0,0,.28)}
     .panel{transition:transform .2s ease}
