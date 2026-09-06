@@ -1115,6 +1115,11 @@ elif page == "Alert Center":
             st.success(f'✅ EMAIL SENT to {live_email}')
         else:
             st.error(f'❌ EMAIL FAILED: {result.get("error", "Unknown error")}')
+        st.divider()
+    whatsapp_text = urllib.parse.quote(f"🚨 {level} ALERT — {district}\n\n{msg}")
+    whatsapp_url = f"https://wa.me/?text={whatsapp_text}"
+    st.link_button("📲 Share via WhatsApp", whatsapp_url, use_container_width=True)
+    st.caption("Opens WhatsApp with the alert pre-filled — you pick the contact or group to send it to.")
 
 # ------------------------------------------------------------
 # Mobile Alert Preview — NEVER EMPTY
