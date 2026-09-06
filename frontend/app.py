@@ -16,6 +16,7 @@ import pandas as pd
 import plotly.express as px
 import streamlit as st
 from streamlit_folium import st_folium
+from folium.plugins import HeatMap
 
 # ------------------------------------------------------------
 # Configuration
@@ -963,6 +964,13 @@ elif page == "Risk Map":
                 icon="info-sign",
             ),
         ).add_to(m)
+
+show_heatmap = st.checkbox("🔥 Show regional risk heatmap")
+if show_heatmap:
+    heat_data = [[z["lat"], z["lon"], z["risk_score"]] for z in zones]
+    HeatMap(heat_data, radius=55, blur=40, max_zoom=7,
+            gradient={0.2: "#1f9d5c", 0.5: "#e9db68", 0.75: "#ffc85e", 1.0: "#ff4d5e"}
+    ).add_to(m)
 
     st_folium(
         m,
