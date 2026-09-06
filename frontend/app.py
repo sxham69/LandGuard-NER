@@ -137,6 +137,12 @@ CSS_TEMPLATE = Template(
     .CRITICAL{background:$critical_bg;color:$critical_text}.HIGH{background:$high_bg;color:$high_text}.MODERATE{background:$moderate_bg;color:$moderate_text}.LOW{background:$low_bg;color:$low_text}
     .scanline{height:2px;background:linear-gradient(90deg,transparent,$eyebrow,transparent)}
     header[data-testid="stHeader"]{background:transparent}
+    .dark-card{background:#071018;color:#e8f1f8;border:1px solid #30485c;border-radius:28px}
+    .dark-card .small{color:#8fa9bd}
+    .dark-card .riskbadge.CRITICAL{background:#541d28;color:#ff9da8}
+    .dark-card .riskbadge.HIGH{background:#4d3314;color:#ffc85e}
+    .dark-card .riskbadge.MODERATE{background:#463e13;color:#e9db68}
+    .dark-card .riskbadge.LOW{background:#123a2b;color:#76e4ac}
     </style>
     """
 )
@@ -1106,7 +1112,7 @@ elif page == "Mobile Alert Preview":
         created = html.escape(str(a.get("created_at", "NOW")))
         message = html.escape(str(a.get("message", "Follow official emergency instructions.")))
         st.markdown(
-            f'''<div style="max-width:760px;background:#071018;border:1px solid #30485c;border-radius:28px;padding:20px 22px;margin:0 0 16px;box-shadow:0 16px 40px rgba(0,0,0,.30)">
+            '''<div class="dark-card" style="padding:18px;margin-top:8px;max-width:330px">
             <div style="display:flex;justify-content:space-between;align-items:center"><span class="small">STATE EOC • {created}</span><span class="riskbadge {lvl}">{lvl}</span></div>
             <div style="font-size:20px;font-weight:800;margin:14px 0 5px">🚨 Landslide Warning</div>
             <div style="font-size:13px;color:#b7c8d5;font-weight:700;margin-bottom:10px">📍 {district}</div>
