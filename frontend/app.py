@@ -972,13 +972,13 @@ if show_heatmap:
             gradient={0.2: "#1f9d5c", 0.5: "#e9db68", 0.75: "#ffc85e", 1.0: "#ff4d5e"}
     ).add_to(m)
 
-st_folium(
+    st_folium(
         m,
         height=650,
         width=None,
         returned_objects=[],
 )
-st.info(
+    st.info(
         "Scope note: this is live weather-driven risk intelligence. "
         "OpenWeather weather conditions are real-time/current provider "
         "data, while slope, history, exposure and the final risk model "
