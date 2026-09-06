@@ -1055,7 +1055,7 @@ elif page == "Alert Center":
         preview = f'''
         <div class="panel"><div class="eyebrow">MOBILE RECIPIENT EXPERIENCE</div>
         <h3>Emergency notification preview</h3>
-        <div style="background:#071018;border:1px solid #30485c;border-radius:28px;padding:18px;margin-top:8px;max-width:330px">
+        <div class="dark-card" style="padding:18px;margin-top:8px;max-width:330px">
         <div class="small">NOW • STATE EOC</div>
         <div style="font-size:18px;font-weight:800;margin:8px 0">🚨 Landslide Warning</div>
         <div style="font-size:12px;line-height:1.55">{templates[lang]}</div>
