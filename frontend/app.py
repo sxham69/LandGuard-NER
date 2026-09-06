@@ -1024,8 +1024,8 @@ elif page == "Alert Center":
             "Nepali": f"पहिरो चेतावनी — {level}। {district} वरपर पहिरोको जोखिम बढेको छ। आधिकारिक निर्देशन पालना गर्नुहोस्।",
         }
         msg = st.text_area("Broadcast message", templates[lang], height=120)
-        email_recipients = st.text_input("Email recipients", placeholder="you@example.com, district-control@example.gov")
-        audit = st.checkbox("Audit log", value=True)
+        email_recipients = st.text_input("Email Recipients", placeholder="you@example.com, district-control@example.gov")
+        audit = st.checkbox("Audit Log", value=True)
 
         if st.button("AUTHORIZE & DISPATCH ALERT", type="primary"):
             recipients = [x.strip() for x in email_recipients.split(",") if x.strip()]
