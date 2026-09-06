@@ -42,6 +42,7 @@ if "theme" not in st.session_state:
 
 DARK_COLORS = {
     "bg": "radial-gradient(circle at 78% 2%,#10365a 0,#071426 38%,#050e1b 100%)",
+    "root_bg": "#071426",
     "text": "#e8f1f8",
     "sidebar_bg": "linear-gradient(180deg,#061323,#091c31)",
     "sidebar_border": "#1d3a57",
@@ -73,6 +74,7 @@ DARK_COLORS = {
 
 LIGHT_COLORS = {
     "bg": "radial-gradient(circle at 78% 2%,#eef4fa 0,#f7fafc 38%,#ffffff 100%)",
+    "root_bg": "#f7fafc",
     "text": "#0f2233",
     "sidebar_bg": "linear-gradient(180deg,#f3f7fb,#e7edf3)",
     "sidebar_border": "#c7d6e3",
@@ -105,6 +107,7 @@ LIGHT_COLORS = {
 CSS_TEMPLATE = Template(
     """
     <style>
+    :root,.stApp{--text-color:$text;--background-color:$root_bg;--secondary-background-color:$panel_bg}
     html,body,[class*=css]{font-family:Inter,sans-serif}
     .stApp{background:$bg;color:$text}
     .stApp label,.stApp [data-testid="stWidgetLabel"] p,.stApp [data-testid="stCaptionContainer"] p,.stApp [data-testid="stMetricLabel"],.stApp [data-testid="stMetricValue"],.stApp [data-testid="stMetricDelta"],.stApp [data-testid="stAlertContentInfo"] p,.stApp [data-testid="stAlertContentWarning"] p,.stApp [data-testid="stAlertContentSuccess"] p,.stApp [data-testid="stAlertContentError"] p,.stApp button p,.stApp [data-baseweb="select"] div,.stApp [data-testid="stDataFrame"] *{color:$text !important}
