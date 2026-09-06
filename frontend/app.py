@@ -977,7 +977,7 @@ st_folium(
         height=650,
         width=None,
         returned_objects=[],
-    )
+)
 
     st.info(
         "Scope note: this is live weather-driven risk intelligence. "
