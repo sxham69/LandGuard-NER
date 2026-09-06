@@ -136,9 +136,7 @@ CSS_TEMPLATE = Template(
     h1,h2,h3{font-family:"Space Grotesk",sans-serif}
     section[data-testid=stSidebar]{background:$sidebar_bg;border-right:1px solid $sidebar_border}
     section[data-testid=stSidebar] h1,section[data-testid=stSidebar] h2,section[data-testid=stSidebar] h3,section[data-testid=stSidebar] p,section[data-testid=stSidebar] label,section[data-testid=stSidebar] span{color:$text !important}
-    .govbar{display:flex;align-items:center;justify-content:space-between;padding:10px 16px;border:1px solid $govbar_border;background:$govbar_bg;border-radius:10px;margin-bottom:10px;position:relative;overflow:hidden}
-    .govbar::before{content:"";position:absolute;inset:0;background-image:repeating-linear-gradient(112deg,rgba(120,190,255,.16) 0 2px,transparent 2px 34px),repeating-linear-gradient(112deg,rgba(120,190,255,.08) 0 1px,transparent 1px 18px);animation:rainfall 1.1s linear infinite;pointer-events:none}
-    @keyframes rainfall{0%{background-position:0 0,0 0}100%{background-position:-160px 260px,-90px 180px}}
+    .govbar{display:flex;align-items:center;justify-content:space-between;padding:10px 16px;border:1px solid $govbar_border;background:$govbar_bg;border-radius:10px;margin-bottom:10px}
     .govbrand{display:flex;gap:12px;align-items:center}.emblem{width:38px;height:38px;border-radius:50%;border:2px solid $emblem_border;display:grid;place-items:center}
     .govtitle{font-weight:800;font-size:14px;color:$text}.govsub{font-size:10px;color:$govsub}.live{font-size:10px;color:$live;text-transform:uppercase;letter-spacing:.08em}
     .dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:$dot}
