@@ -978,13 +978,12 @@ st_folium(
         width=None,
         returned_objects=[],
 )
-
-    st.info(
+st.info(
         "Scope note: this is live weather-driven risk intelligence. "
         "OpenWeather weather conditions are real-time/current provider "
         "data, while slope, history, exposure and the final risk model "
         "remain prototype components. It is not direct landslide detection."
-    )
+)
 
 
 # ------------------------------------------------------------
