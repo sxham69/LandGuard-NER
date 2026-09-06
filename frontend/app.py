@@ -152,6 +152,8 @@ CSS_TEMPLATE = Template(
     .CRITICAL{background:$critical_bg;color:$critical_text}.HIGH{background:$high_bg;color:$high_text}.MODERATE{background:$moderate_bg;color:$moderate_text}.LOW{background:$low_bg;color:$low_text}
     .scanline{height:2px;background:linear-gradient(90deg,transparent,$eyebrow,transparent)}
     header[data-testid="stHeader"]{background:transparent}
+    header[data-testid="stHeader"] svg{fill:$text !important;color:$text !important}
+    header[data-testid="stHeader"] a,header[data-testid="stHeader"] button{color:$text !important}
     .dark-card{background:$card_bg;color:$text;border:1px solid $card_border;border-radius:28px}
     .dark-card .small{color:$card_meta}
     .dark-card .card-meta{color:$card_meta}
