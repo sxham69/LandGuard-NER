@@ -122,8 +122,7 @@ CSS_TEMPLATE = Template(
     <style>
     :root,.stApp{--text-color:$text;--background-color:$root_bg;--secondary-background-color:$panel_bg}
     html,body,[class*=css]{font-family:Inter,sans-serif}
-    .stApp{background:$bg;background-size:200% 200%;animation:auroraShift 18s ease infinite;color:$text}
-    @keyframes auroraShift{0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}}
+    .stApp{background:bg;color:$text}
     .stApp label,.stApp [data-testid="stWidgetLabel"] p,.stApp [data-testid="stCaptionContainer"] p,.stApp [data-testid="stMetricLabel"],.stApp [data-testid="stMetricValue"],.stApp [data-testid="stMetricDelta"],.stApp [data-testid="stAlertContentInfo"] p,.stApp [data-testid="stAlertContentWarning"] p,.stApp [data-testid="stAlertContentSuccess"] p,.stApp [data-testid="stAlertContentError"] p,.stApp button p,.stApp [data-baseweb="select"] div,.stApp [data-testid="stDataFrame"] *{color:$text !important}
     .stApp [data-testid="stCheckbox"] p,.stApp [data-testid="stCheckbox"] span,.stApp [data-testid="stToggle"] p,.stApp [data-testid="stToggle"] span,.stApp [data-testid="stRadio"] p,.stApp [data-testid="stRadio"] span,.stApp [data-testid="stSlider"] div,.stApp [data-testid="stSlider"] span{color:$text !important}
     .stApp input,.stApp [data-testid="stTextInput"] input,.stApp [data-testid="stNumberInput"] input{background:$input_bg !important;color:$text !important;border:1px solid $panel_border !important;-webkit-text-fill-color:$text !important}
