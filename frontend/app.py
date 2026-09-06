@@ -1133,17 +1133,17 @@ elif page == "Mobile Alert Preview":
 
     st.markdown("### Emergency notification feed")
     for a in reversed(alerts[-5:]):
-        lvl = html.escape(str(a.get("risk_level", "MODERATE")))
-        district = html.escape(str(a.get("district", "NER")))
-        created = html.escape(str(a.get("created_at", "NOW")))
-        message = html.escape(str(a.get("message", "Follow official emergency instructions.")))
+        lvl = a.get("risk_level", "MODERATE")
+        district = a.get("district", "NER")
+        created = a.get("created_at", "NOW")
+        message = a.get("message", "Follow official emergency instructions.")
         st.markdown(
-            '''<div class="dark-card" style="padding:18px;margin-top:8px;max-width:330px">
+            f'''<div style="max-width:760px;background:#071018;border:1px solid #30485c;border-radius:28px;padding:20px 22px;margin:0 0 16px;box-shadow:0 16px 40px rgba(0,0,0,.30)">
             <div style="display:flex;justify-content:space-between;align-items:center"><span class="small">STATE EOC • {created}</span><span class="riskbadge {lvl}">{lvl}</span></div>
             <div style="font-size:20px;font-weight:800;margin:14px 0 5px">🚨 Landslide Warning</div>
-            <div class="card-meta" style="font-size:13px;font-weight:700;margin-bottom:10px">📍 {district}</div>
-            <div class="card-message" style="font-size:13px;line-height:1.65">{message}</div>
-            <div class="card-cta" style="margin-top:16px;padding:10px 12px;border-radius:10px;font-size:11px;font-weight:700">OPEN EMERGENCY ADVISORY ›</div>
+            <div style="font-size:13px;color:#b7c8d5;font-weight:700;margin-bottom:10px">📍 {district}</div>
+            <div style="font-size:13px;line-height:1.65;color:#e8f1f8">{message}</div>
+            <div style="margin-top:16px;padding:10px 12px;border-radius:10px;background:#102a40;color:#73dcff;font-size:11px;font-weight:700">OPEN EMERGENCY ADVISORY ›</div>
             </div>''',
             unsafe_allow_html=True,
         )
@@ -1153,7 +1153,6 @@ elif page == "Mobile Alert Preview":
     c2.metric("🧾 AUDIT", "ENABLED", "Every dispatch logged")
     c3.metric("🔒 BACKEND", "NOT REQUIRED", "Standalone app")
     st.caption("The preview is visual only; actual delivery is handled by email SMTP.")
-
 # ------------------------------------------------------------
 # Analytics — NEVER EMPTY
 # ------------------------------------------------------------
