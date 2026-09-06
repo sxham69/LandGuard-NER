@@ -128,6 +128,9 @@ CSS_TEMPLATE = Template(
     .stApp input,.stApp [data-testid="stTextInput"] input,.stApp [data-testid="stNumberInput"] input{background:$input_bg !important;color:$text !important;border:1px solid $panel_border !important;-webkit-text-fill-color:$text !important}
     .stApp [data-baseweb="select"]>div{background:$input_bg !important;border:1px solid $panel_border !important}
     .stApp [data-baseweb="select"] *{color:$text !important}
+    .stApp [data-testid="stFileUploader"] *{color:$text !important}
+    .stApp [data-testid="stFileUploaderDropzone"]{background:$input_bg !important;border:1px dashed $panel_border !important}
+    .stApp [data-testid="stFileUploaderDropzone"] button{background:$panel_bg !important;border:1px solid $panel_border !important}
     .stApp textarea,.stApp [data-testid="stTextArea"] textarea{background:$input_bg !important;color:$text !important;border:1px solid $panel_border !important;-webkit-text-fill-color:$text !important}
     .block-container{padding-top:1rem;max-width:1500px}
     h1,h2,h3{font-family:"Space Grotesk",sans-serif}
