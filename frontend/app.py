@@ -117,7 +117,6 @@ CSS_TEMPLATE = Template(
     .stApp [data-testid="stTextInput"] div[data-baseweb="input"],.stApp [data-testid="stNumberInput"] div[data-baseweb="input"],.stApp [data-baseweb="select"]>div{background:$input_bg !important;border:1px solid $panel_border !important}
     .stApp [data-testid="stTextInput"] input,.stApp [data-testid="stNumberInput"] input,.stApp [data-baseweb="select"] *{color:$text !important;background:transparent !important}
     .stApp textarea,.stApp [data-testid="stTextArea"] textarea{background:$input_bg !important;color:$text !important;border:1px solid $panel_border !important;-webkit-text-fill-color:$text !important}
-    .stApp [data-testid="stTextInput"] input,.stApp [data-testid="stTextArea"] textarea,.stApp [data-testid="stNumberInput"] input,.stApp [data-baseweb="select"] *{color:$text !important;background:transparent !important}
     .block-container{padding-top:1rem;max-width:1500px}
     h1,h2,h3{font-family:"Space Grotesk",sans-serif}
     section[data-testid=stSidebar]{background:$sidebar_bg;border-right:1px solid $sidebar_border}
