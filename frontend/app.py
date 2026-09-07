@@ -16,7 +16,6 @@ import pandas as pd
 import plotly.express as px
 import streamlit as st
 from streamlit_folium import st_folium
-from folium.plugins import HeatMap
 
 # ------------------------------------------------------------
 # Configuration
@@ -72,11 +71,6 @@ DARK_COLORS = {
     "high_bg": "#4d3314", "high_text": "#ffc85e",
     "moderate_bg": "#463e13", "moderate_text": "#e9db68",
     "low_bg": "#123a2b", "low_text": "#76e4ac",
-    "card_bg": "#071018",
-    "card_border": "#30485c",
-    "card_meta": "#8fa9bd",
-    "card_cta_bg": "#102a40",
-    "card_cta_text": "#73dcff",
 }
 
 LIGHT_COLORS = {
@@ -110,11 +104,6 @@ LIGHT_COLORS = {
     "high_bg": "#fbe7cd", "high_text": "#8a5a10",
     "moderate_bg": "#f7f0c4", "moderate_text": "#6b5c0c",
     "low_bg": "#d8f3e6", "low_text": "#14663f",
-    "card_bg": "#ffffff",
-    "card_border": "#c7d6e3",
-    "card_meta": "#51677a",
-    "card_cta_bg": "#e7f3fb",
-    "card_cta_text": "#0a7ea8",
 }
 
 CSS_TEMPLATE = Template(
@@ -125,12 +114,8 @@ CSS_TEMPLATE = Template(
     .stApp{background:$bg;color:$text}
     .stApp label,.stApp [data-testid="stWidgetLabel"] p,.stApp [data-testid="stCaptionContainer"] p,.stApp [data-testid="stMetricLabel"],.stApp [data-testid="stMetricValue"],.stApp [data-testid="stMetricDelta"],.stApp [data-testid="stAlertContentInfo"] p,.stApp [data-testid="stAlertContentWarning"] p,.stApp [data-testid="stAlertContentSuccess"] p,.stApp [data-testid="stAlertContentError"] p,.stApp button p,.stApp [data-baseweb="select"] div,.stApp [data-testid="stDataFrame"] *{color:$text !important}
     .stApp [data-testid="stCheckbox"] p,.stApp [data-testid="stCheckbox"] span,.stApp [data-testid="stToggle"] p,.stApp [data-testid="stToggle"] span,.stApp [data-testid="stRadio"] p,.stApp [data-testid="stRadio"] span,.stApp [data-testid="stSlider"] div,.stApp [data-testid="stSlider"] span{color:$text !important}
-    .stApp input,.stApp [data-testid="stTextInput"] input,.stApp [data-testid="stNumberInput"] input{background:$input_bg !important;color:$text !important;border:1px solid $panel_border !important;-webkit-text-fill-color:$text !important}
-    .stApp [data-baseweb="select"]>div{background:$input_bg !important;border:1px solid $panel_border !important}
-    .stApp [data-baseweb="select"] *{color:$text !important}
-    .stApp [data-testid="stFileUploader"] *{color:$text !important}
-    .stApp [data-testid="stFileUploaderDropzone"]{background:$input_bg !important;border:1px dashed $panel_border !important}
-    .stApp [data-testid="stFileUploaderDropzone"] button{background:$panel_bg !important;border:1px solid $panel_border !important}
+    .stApp [data-testid="stTextInput"] div[data-baseweb="input"],.stApp [data-testid="stNumberInput"] div[data-baseweb="input"],.stApp [data-baseweb="select"]>div{background:$input_bg !important;border:1px solid $panel_border !important}
+    .stApp [data-testid="stTextInput"] input,.stApp [data-testid="stNumberInput"] input,.stApp [data-baseweb="select"] *{color:$text !important;background:transparent !important}
     .stApp textarea,.stApp [data-testid="stTextArea"] textarea{background:$input_bg !important;color:$text !important;border:1px solid $panel_border !important;-webkit-text-fill-color:$text !important}
     .block-container{padding-top:1rem;max-width:1500px}
     h1,h2,h3{font-family:"Space Grotesk",sans-serif}
@@ -151,21 +136,13 @@ CSS_TEMPLATE = Template(
     .riskbadge{display:inline-block;padding:5px 9px;border-radius:999px;font-size:10px;font-weight:800}
     .CRITICAL{background:$critical_bg;color:$critical_text}.HIGH{background:$high_bg;color:$high_text}.MODERATE{background:$moderate_bg;color:$moderate_text}.LOW{background:$low_bg;color:$low_text}
     .scanline{height:2px;background:linear-gradient(90deg,transparent,$eyebrow,transparent)}
-    @keyframes pulseglow{0%{box-shadow:0 0 0 0 rgba(226,75,74,.55)}70%{box-shadow:0 0 0 14px rgba(226,75,74,0)}100%{box-shadow:0 0 0 0 rgba(226,75,74,0)}}
-    .riskbadge.CRITICAL{animation:pulseglow 1.8s ease-out infinite}
-    .kpi.red{animation:pulseglow 2.4s ease-out infinite}
     header[data-testid="stHeader"]{background:transparent}
-    header[data-testid="stHeader"] svg{fill:$text !important;color:$text !important}
-    header[data-testid="stHeader"] a,header[data-testid="stHeader"] button{color:$text !important}
-    .dark-card{background:$card_bg;color:$text;border:1px solid $card_border;border-radius:28px}
-    .dark-card .small{color:$card_meta}
-    .dark-card .card-meta{color:$card_meta}
-    .dark-card .card-message{color:$text}
-    .dark-card .card-cta{background:$card_cta_bg;color:$card_cta_text}
-    .dark-card .riskbadge.CRITICAL{background:$critical_bg;color:$critical_text}
-    .dark-card .riskbadge.HIGH{background:$high_bg;color:$high_text}
-    .dark-card .riskbadge.MODERATE{background:$moderate_bg;color:$moderate_text}
-    .dark-card .riskbadge.LOW{background:$low_bg;color:$low_text}
+    .dark-card{background:#071018;color:#e8f1f8;border:1px solid #30485c;border-radius:28px}
+    .dark-card .small{color:#8fa9bd}
+    .dark-card .riskbadge.CRITICAL{background:#541d28;color:#ff9da8}
+    .dark-card .riskbadge.HIGH{background:#4d3314;color:#ffc85e}
+    .dark-card .riskbadge.MODERATE{background:#463e13;color:#e9db68}
+    .dark-card .riskbadge.LOW{background:#123a2b;color:#76e4ac}
     </style>
     """
 )
@@ -177,7 +154,7 @@ def render_theme_css(theme):
     st.markdown(CSS_TEMPLATE.safe_substitute(colors), unsafe_allow_html=True)
 
 
-
+render_theme_css(st.session_state.theme)
 
 
 # ------------------------------------------------------------
@@ -682,13 +659,14 @@ is_light = st.sidebar.toggle(
     value=(st.session_state.theme == "light"),
     key="theme_toggle",
 )
-st.session_state.theme = "light" if is_light else "dark"
-render_theme_css(st.session_state.theme)
+new_theme = "light" if is_light else "dark"
+if new_theme != st.session_state.theme:
+    st.session_state.theme = new_theme
+    st.rerun()
 
 page = st.sidebar.radio(
     "COMMAND MODULES",
     ["Command Center", "AI Digital Twin", "Risk Map", "Field Intelligence", "Alert Center", "Mobile Alert Preview", "Analytics", "About"],
-    key="nav_page",
 )
 st.sidebar.divider()
 st.sidebar.divider()
@@ -907,7 +885,7 @@ elif page == "Risk Map":
         hide_index=True,
     )
 
-    st.markdown("### Interactive Risk Map")
+    st.markdown("### Interactive risk map")
 
     m = folium.Map(
         location=[25.7, 92.5],
@@ -974,24 +952,18 @@ elif page == "Risk Map":
             ),
         ).add_to(m)
 
-    show_heatmap = st.checkbox("🔥 SHOW REGIONAL RISK HEATMAP")
-    if show_heatmap:
-        heat_data = [[z["lat"], z["lon"], z["risk_score"]] for z in zones]
-        HeatMap(heat_data, radius=55, blur=40, max_zoom=7,
-                gradient={0.2: "#1f9d5c", 0.5: "#e9db68", 0.75: "#ffc85e", 1.0: "#ff4d5e"}
-        ).add_to(m)
-
-        st_folium(
-            m,
-            height=650,
-            width=None,
-            returned_objects=[],
+    st_folium(
+        m,
+        height=650,
+        width=None,
+        returned_objects=[],
     )
-        st.info(
-            "Scope note: this is live weather-driven risk intelligence. "
-            "OpenWeather weather conditions are real-time/current provider "
-            "data, while slope, history, exposure and the final risk model "
-            "remain prototype components. It is not direct landslide detection."
+
+    st.info(
+        "Scope note: this is live weather-driven risk intelligence. "
+        "OpenWeather weather conditions are real-time/current provider "
+        "data, while slope, history, exposure and the final risk model "
+        "remain prototype components. It is not direct landslide detection."
     )
 
 
@@ -1052,6 +1024,7 @@ elif page == "Alert Center":
             "Nepali": f"पहिरो चेतावनी — {level}। {district} वरपर पहिरोको जोखिम बढेको छ। आधिकारिक निर्देशन पालना गर्नुहोस्।",
         }
         msg = st.text_area("Broadcast message", templates[lang], height=120)
+        subject = st.text_input("Email subject", value=f"LANDSLIDE WARNING — {level} — {district}")
         email_recipients = st.text_input("Email Recipients", placeholder="you@example.com, district-control@example.gov")
         audit = st.checkbox("Audit Log", value=True)
 
@@ -1104,6 +1077,7 @@ elif page == "Alert Center":
     st.caption("This test sends directly through SMTP. No separate backend service is required.")
 
     live_email = st.text_input("Recipient email address", placeholder="your-email@example.com", key="live_email")
+    live_subject = st.text_input("Email subject", value="LandslideGuard NER — Test Alert", key="live_email_subject")
     live_message = st.text_area(
         "Email message",
         value="LANDSLIDEGUARD NER: DEMO ALERT — Please follow official local disaster-management instructions.",
@@ -1141,9 +1115,9 @@ elif page == "Mobile Alert Preview":
             '''<div class="dark-card" style="padding:18px;margin-top:8px;max-width:330px">
             <div style="display:flex;justify-content:space-between;align-items:center"><span class="small">STATE EOC • {created}</span><span class="riskbadge {lvl}">{lvl}</span></div>
             <div style="font-size:20px;font-weight:800;margin:14px 0 5px">🚨 Landslide Warning</div>
-            <div class="card-meta" style="font-size:13px;font-weight:700;margin-bottom:10px">📍 {district}</div>
-            <div class="card-message" style="font-size:13px;line-height:1.65">{message}</div>
-            <div class="card-cta" style="margin-top:16px;padding:10px 12px;border-radius:10px;font-size:11px;font-weight:700">OPEN EMERGENCY ADVISORY ›</div>
+            <div style="font-size:13px;color:#b7c8d5;font-weight:700;margin-bottom:10px">📍 {district}</div>
+            <div style="font-size:13px;line-height:1.65;color:#e8f1f8">{message}</div>
+            <div style="margin-top:16px;padding:10px 12px;border-radius:10px;background:#102a40;color:#73dcff;font-size:11px;font-weight:700">OPEN EMERGENCY ADVISORY ›</div>
             </div>''',
             unsafe_allow_html=True,
         )
