@@ -1,4 +1,3 @@
-import html
 import os
 import re
 import smtplib
@@ -6,7 +5,6 @@ import ssl
 from datetime import datetime, timezone
 from email.message import EmailMessage
 from pathlib import Path
-from string import Template
 
 import certifi
 import folium
@@ -21,12 +19,18 @@ from streamlit_folium import st_folium
 # Configuration
 # ------------------------------------------------------------
 ROOT = Path(__file__).resolve().parents[1]
-ENV_FILE = ROOT / ".env"
+
+# Load configuration from the project .env without overwriting an already
+# configured OS/Streamlit secret. This avoids accidentally replacing a valid
+# key with an old or empty .env value.
 try:
     from dotenv import load_dotenv
-    load_dotenv(ENV_FILE, override=True)
+    for env_file in (ROOT / ".env", Path.cwd() / ".env", Path.cwd().parent / ".env"):
+        if env_file.exists():
+            load_dotenv(env_file, override=False)
 except Exception:
     pass
+
 
 st.set_page_config(
     page_title="LandslideGuard NER • State EOC",
@@ -34,133 +38,295 @@ st.set_page_config(
     layout="wide",
 )
 
-# ------------------------------------------------------------
-# Theme (Dark / Bright) — must be initialized before CSS renders
-# ------------------------------------------------------------
-if "theme" not in st.session_state:
-    st.session_state.theme = "dark"
+# Persistent UI theme. Streamlit reruns the script when the toggle is tapped,
+# so both the dashboard and the Folium map are rebuilt in the selected theme.
+if "dark_mode" not in st.session_state:
+    st.session_state.dark_mode = True
 
-DARK_COLORS = {
-    "bg": "radial-gradient(circle at 78% 2%,#10365a 0,#071426 38%,#050e1b 100%)",
-    "root_bg": "#071426",
-    "text": "#e8f1f8",
-    "sidebar_bg": "linear-gradient(180deg,#061323,#091c31)",
-    "sidebar_border": "#1d3a57",
-    "govbar_border": "#1d3a57",
-    "govbar_bg": "rgba(8,28,48,.9)",
-    "emblem_border": "#d8e5ee",
-    "govsub": "#8fa9bd",
-    "live": "#a8c0d2",
-    "dot": "#28d17c",
-    "ticker_border": "#53323a",
-    "ticker_bg": "#1a1620",
-    "ticker_text": "#ffd5da",
-    "kpi_bg": "linear-gradient(145deg,rgba(14,38,64,.96),rgba(7,23,40,.96))",
-    "kpi_border": "#1d3a57",
-    "kpi_label": "#8fa9bd",
-    "kpi_meta": "#a6bbcb",
-    "kpi_red_border": "#6b2935",
-    "kpi_cyan_border": "#1a6276",
-    "kpi_amber_border": "#6c5221",
-    "panel_bg": "rgba(10,30,51,.82)",
-    "panel_border": "#1d3a57",
-    "input_bg": "#0a1e33",
-    "eyebrow": "#29d3ff",
-    "small": "#8fa9bd",
-    "critical_bg": "#541d28", "critical_text": "#ff9da8",
-    "high_bg": "#4d3314", "high_text": "#ffc85e",
-    "moderate_bg": "#463e13", "moderate_text": "#e9db68",
-    "low_bg": "#123a2b", "low_text": "#76e4ac",
-}
+DARK = st.session_state.dark_mode
 
-LIGHT_COLORS = {
-    "bg": "radial-gradient(circle at 78% 2%,#eef4fa 0,#f7fafc 38%,#ffffff 100%)",
-    "root_bg": "#f7fafc",
-    "text": "#0f2233",
-    "sidebar_bg": "linear-gradient(180deg,#f3f7fb,#e7edf3)",
-    "sidebar_border": "#c7d6e3",
-    "govbar_border": "#c7d6e3",
-    "govbar_bg": "rgba(255,255,255,.92)",
-    "emblem_border": "#3a5a73",
-    "govsub": "#51677a",
-    "live": "#3d6580",
-    "dot": "#1f9d5c",
-    "ticker_border": "#e3b7bd",
-    "ticker_bg": "#fdeef0",
-    "ticker_text": "#8a2e3a",
-    "kpi_bg": "linear-gradient(145deg,rgba(255,255,255,.97),rgba(238,244,250,.97))",
-    "kpi_border": "#c7d6e3",
-    "kpi_label": "#51677a",
-    "kpi_meta": "#5b7185",
-    "kpi_red_border": "#d69aa6",
-    "kpi_cyan_border": "#8fd0e6",
-    "kpi_amber_border": "#e0c584",
-    "panel_bg": "rgba(255,255,255,.88)",
-    "panel_border": "#c7d6e3",
-    "input_bg": "#ffffff",
-    "eyebrow": "#0a7ea8",
-    "small": "#5b7185",
-    "critical_bg": "#fbdde1", "critical_text": "#8a1f30",
-    "high_bg": "#fbe7cd", "high_text": "#8a5a10",
-    "moderate_bg": "#f7f0c4", "moderate_text": "#6b5c0c",
-    "low_bg": "#d8f3e6", "low_text": "#14663f",
-}
-
-CSS_TEMPLATE = Template(
-    """
+st.markdown(
+    f"""
     <style>
-    :root,.stApp{--text-color:$text;--background-color:$root_bg;--secondary-background-color:$panel_bg}
-    html,body,[class*=css]{font-family:Inter,sans-serif}
-    .stApp{background:$bg;color:$text}
-    .stApp label,.stApp [data-testid="stWidgetLabel"] p,.stApp [data-testid="stCaptionContainer"] p,.stApp [data-testid="stMetricLabel"],.stApp [data-testid="stMetricValue"],.stApp [data-testid="stMetricDelta"],.stApp [data-testid="stAlertContentInfo"] p,.stApp [data-testid="stAlertContentWarning"] p,.stApp [data-testid="stAlertContentSuccess"] p,.stApp [data-testid="stAlertContentError"] p,.stApp button p,.stApp [data-baseweb="select"] div,.stApp [data-testid="stDataFrame"] *{color:$text !important}
-    .stApp [data-testid="stCheckbox"] p,.stApp [data-testid="stCheckbox"] span,.stApp [data-testid="stToggle"] p,.stApp [data-testid="stToggle"] span,.stApp [data-testid="stRadio"] p,.stApp [data-testid="stRadio"] span,.stApp [data-testid="stSlider"] div,.stApp [data-testid="stSlider"] span{color:$text !important}
-    .stApp [data-testid="stTextInput"] div[data-baseweb="input"],.stApp [data-testid="stNumberInput"] div[data-baseweb="input"],.stApp [data-testid="stNumberInput"] div[data-baseweb="base-input"],.stApp [data-testid="stDateInput"] div[data-baseweb="input"],.stApp [data-testid="stTimeInput"] div[data-baseweb="input"],.stApp [data-baseweb="select"]>div,.stApp [data-baseweb="base-input"]{background:$input_bg !important;border:1px solid $panel_border !important}
-    .stApp [data-testid="stTextInput"] input,.stApp [data-testid="stNumberInput"] input,.stApp [data-testid="stDateInput"] input,.stApp [data-testid="stTimeInput"] input,.stApp [data-baseweb="select"] *,.stApp [data-baseweb="input"] input,.stApp input{color:$text !important;background:transparent !important;-webkit-text-fill-color:$text !important}
-    .stApp textarea,.stApp [data-testid="stTextArea"] textarea{background:$input_bg !important;color:$text !important;border:1px solid $panel_border !important;-webkit-text-fill-color:$text !important}
-    .stApp [data-testid="stNumberInput"] button,.stApp [data-testid="stNumberInputStepUp"],.stApp [data-testid="stNumberInputStepDown"]{background:$input_bg !important;color:$text !important;border-color:$panel_border !important}
-    .stApp [data-testid="stFileUploaderDropzone"],.stApp [data-testid="stFileUploader"] section{background:$input_bg !important;border:1px dashed $panel_border !important}
-    .stApp [data-testid="stFileUploaderDropzone"] *,.stApp [data-testid="stFileUploader"] section *{color:$text !important}
-    .stApp [data-testid="stFileUploaderDropzoneInstructions"] svg{fill:$text !important}
-    div[data-baseweb="popover"] [data-baseweb="menu"],div[data-baseweb="popover"] li,div[data-baseweb="popover"] ul{background:$input_bg !important;color:$text !important}
-    div[data-baseweb="popover"] li:hover{background:$panel_bg !important}
-    .block-container{padding-top:1rem;max-width:1500px}
-    h1,h2,h3{font-family:"Space Grotesk",sans-serif}
-    section[data-testid=stSidebar]{background:$sidebar_bg;border-right:1px solid $sidebar_border}
-    section[data-testid=stSidebar] h1,section[data-testid=stSidebar] h2,section[data-testid=stSidebar] h3,section[data-testid=stSidebar] p,section[data-testid=stSidebar] label,section[data-testid=stSidebar] span{color:$text !important}
-    .govbar{display:flex;align-items:center;justify-content:space-between;padding:10px 16px;border:1px solid $govbar_border;background:$govbar_bg;border-radius:10px;margin-bottom:10px}
-    .govbrand{display:flex;gap:12px;align-items:center}.emblem{width:38px;height:38px;border-radius:50%;border:2px solid $emblem_border;display:grid;place-items:center}
-    .govtitle{font-weight:800;font-size:14px;color:$text}.govsub{font-size:10px;color:$govsub}.live{font-size:10px;color:$live;text-transform:uppercase;letter-spacing:.08em}
-    .dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:$dot}
-    .ticker{overflow:hidden;white-space:nowrap;border:1px solid $ticker_border;background:$ticker_bg;border-radius:8px;padding:8px 0;margin:8px 0 16px;color:$ticker_text;font-size:12px}
-    .ticker span{display:inline-block;padding-left:100%;animation:marquee 28s linear infinite}@keyframes marquee{to{transform:translateX(-100%)}}
-    .kpi{background:$kpi_bg;border:1px solid $kpi_border;border-radius:13px;padding:14px 16px;min-height:104px;box-shadow:0 12px 35px rgba(0,0,0,.18)}
-    .kpi .label{font-size:10px;color:$kpi_label;letter-spacing:.1em;font-weight:800}.kpi .value{font-size:29px;font-weight:700;margin:6px 0;color:$text}.kpi .meta{font-size:11px;color:$kpi_meta}
-    .kpi.red{border-color:$kpi_red_border}.kpi.cyan{border-color:$kpi_cyan_border}.kpi.amber{border-color:$kpi_amber_border}
-    .panel{background:$panel_bg;border:1px solid $panel_border;border-radius:14px;padding:16px;box-shadow:0 10px 30px rgba(0,0,0,.16)}
-    .panel,.panel b,.panel p{color:$text}
-    .eyebrow{font-size:10px;color:$eyebrow;font-weight:800;letter-spacing:.12em;text-transform:uppercase}.small{font-size:11px;color:$small}
-    .riskbadge{display:inline-block;padding:5px 9px;border-radius:999px;font-size:10px;font-weight:800}
-    .CRITICAL{background:$critical_bg;color:$critical_text}.HIGH{background:$high_bg;color:$high_text}.MODERATE{background:$moderate_bg;color:$moderate_text}.LOW{background:$low_bg;color:$low_text}
-    .scanline{height:2px;background:linear-gradient(90deg,transparent,$eyebrow,transparent)}
-    header[data-testid="stHeader"]{background:transparent}
-    .dark-card{background:#071018;color:#e8f1f8;border:1px solid #30485c;border-radius:28px}
-    .dark-card .small{color:#8fa9bd}
-    .dark-card .riskbadge.CRITICAL{background:#541d28;color:#ff9da8}
-    .dark-card .riskbadge.HIGH{background:#4d3314;color:#ffc85e}
-    .dark-card .riskbadge.MODERATE{background:#463e13;color:#e9db68}
-    .dark-card .riskbadge.LOW{background:#123a2b;color:#76e4ac}
+    :root {{
+        --bg: {'#071426' if DARK else '#f4f8fb'};
+        --surface: {'#0a1e33' if DARK else '#ffffff'};
+        --surface2: {'#0e2640' if DARK else '#f1f6f9'};
+        --border: {'#1d3a57' if DARK else '#c7d6df'};
+        --text: {'#e8f1f8' if DARK else '#10202e'};
+        --muted: {'#8fa9bd' if DARK else '#506879'};
+        --accent: #29d3ff;
+        --input: {'#0b2035' if DARK else '#ffffff'};
+        --input-hover: {'#102a40' if DARK else '#f5f9fc'};
+        --control-border: {'#2a4a66' if DARK else '#b9cbd6'};
+        --table-head: {'#102b45' if DARK else '#edf4f8'};
+        --table-row: {'#0a1e33' if DARK else '#ffffff'};
+        --table-row-alt: {'#0d2740' if DARK else '#f7fafc'};
+        --table-hover: {'#153653' if DARK else '#eaf3f7'};
+        --code-bg: {'#071522' if DARK else '#f3f7fa'};
+    }}
+    html, body, [class*=css] {{ font-family: Inter, sans-serif; }}
+    .stApp {{
+        background: radial-gradient(circle at 78% 2%, {'#10365a 0, #071426 38%, #050e1b 100%' if DARK else '#ffffff 0, #f4f8fb 42%, #eaf2f7 100%'});
+        color: var(--text) !important;
+        min-height: 100vh;
+    }}
+
+    /* Keep the fixed Streamlit header from covering the first dashboard card. */
+    header[data-testid="stHeader"] {{
+        background: {'#080d14' if DARK else '#ffffff'} !important;
+        border-bottom: 1px solid var(--border) !important;
+        z-index: 1000 !important;
+    }}
+    header[data-testid="stHeader"] * {{ color:var(--text) !important; }}
+    header[data-testid="stHeader"] svg {{ fill:var(--text) !important; color:var(--text) !important; }}
+
+    .block-container {{
+        padding-top: 5.5rem !important;
+        padding-bottom: 2rem !important;
+        max-width: 1500px;
+    }}
+    h1,h2,h3,h4,h5,h6 {{ font-family:"Space Grotesk",sans-serif; color:var(--text) !important; }}
+
+    section[data-testid="stSidebar"] {{
+        background:linear-gradient(180deg, {'#061323' if DARK else '#ffffff'}, {'#091c31' if DARK else '#edf4f8'}) !important;
+        border-right:1px solid var(--border) !important;
+    }}
+    section[data-testid="stSidebar"] * {{ color:var(--text) !important; }}
+    section[data-testid="stSidebar"] [data-testid="stCaptionContainer"] * {{ color:var(--muted) !important; }}
+    section[data-testid="stSidebar"] [data-testid="stAlert"] * {{ color:{'#8ff0bb' if DARK else '#1c8a54'} !important; }}
+
+    .stApp [data-testid="stMarkdownContainer"] p,
+    .stApp [data-testid="stMarkdownContainer"] li,
+    .stApp [data-testid="stWidgetLabel"] p,
+    .stApp label {{ color:var(--text) !important; }}
+    .stApp [data-testid="stCaptionContainer"] {{ color:var(--muted) !important; }}
+    .stApp input, .stApp textarea {{ color:var(--text) !important; background:var(--input) !important; border-color:var(--border) !important; }}
+    .stApp input::placeholder, .stApp textarea::placeholder {{ color:var(--muted) !important; opacity:1 !important; }}
+    /* Streamlit/BaseWeb select controls */
+    .stApp [data-baseweb="select"] {{
+        width:100% !important;
+        color:var(--text) !important;
+    }}
+    .stApp [data-baseweb="select"] > div {{
+        background:var(--input) !important;
+        color:var(--text) !important;
+        border:1px solid var(--border) !important;
+        border-radius:12px !important;
+        min-height:48px !important;
+        box-shadow:none !important;
+    }}
+    .stApp [data-baseweb="select"] > div > div {{
+        background:transparent !important;
+        color:var(--text) !important;
+    }}
+    .stApp [data-baseweb="select"] * {{ color:var(--text) !important; }}
+    .stApp [data-baseweb="select"] svg {{
+        fill:var(--text) !important;
+        color:var(--text) !important;
+    }}
+    .stApp [data-baseweb="select"] [role="button"] {{
+        background:transparent !important;
+        color:var(--text) !important;
+    }}
+    .stApp [data-baseweb="select"] > div > div:last-child {{
+        background:transparent !important;
+        border-radius:0 12px 12px 0 !important;
+    }}
+
+    /* Open dropdown menu */
+    [data-baseweb="popover"],
+    [data-baseweb="menu"],
+    [data-baseweb="menu"] > div,
+    [role="listbox"] {{
+        background:{'#0b2035' if DARK else '#ffffff'} !important;
+        color:var(--text) !important;
+        border:1px solid var(--border) !important;
+        box-shadow:0 12px 30px rgba(0,0,0,.18) !important;
+    }}
+    [data-baseweb="menu"] li,
+    [role="option"] {{
+        background:{'#0b2035' if DARK else '#ffffff'} !important;
+        color:var(--text) !important;
+    }}
+    [data-baseweb="menu"] li:hover,
+    [role="option"]:hover,
+    [aria-selected="true"] {{
+        background:{'#153653' if DARK else '#e8f2f7'} !important;
+        color:var(--text) !important;
+    }}
+    [data-baseweb="popover"] *,
+    [data-baseweb="menu"] *,
+    [role="listbox"] *,
+    [role="option"] * {{ color:var(--text) !important; }}
+    .stApp button {{ color:var(--text) !important; }}
+    .stApp [data-testid="stAlert"] {{ color:var(--text) !important; }}
+    .stApp [data-testid="stMetric"] label, .stApp [data-testid="stMetricLabel"] {{ color:var(--muted) !important; }}
+    .stApp [data-testid="stMetricValue"], .stApp [data-testid="stMetricDelta"] {{ color:var(--text) !important; }}
+
+    /* Complete theme synchronization: every native Streamlit control follows the selected theme. */
+    .stApp, .stApp * {{ color-scheme:{'dark' if DARK else 'light'}; }}
+    .stApp [data-testid="stVerticalBlockBorderWrapper"],
+    .stApp [data-testid="stExpander"],
+    .stApp [data-testid="stPopover"],
+    .stApp [data-testid="stForm"] {{
+        background:transparent !important;
+        color:var(--text) !important;
+    }}
+    .stApp [data-testid="stButton"] > button,
+    .stApp [data-testid="stFormSubmitButton"] > button,
+    .stApp button {{
+        background:var(--surface) !important;
+        color:var(--text) !important;
+        border:1px solid var(--control-border) !important;
+        border-radius:10px !important;
+        box-shadow:none !important;
+    }}
+    .stApp [data-testid="stButton"] > button:hover,
+    .stApp [data-testid="stFormSubmitButton"] > button:hover,
+    .stApp button:hover {{
+        background:var(--input-hover) !important;
+        color:var(--text) !important;
+        border-color:var(--accent) !important;
+    }}
+    .stApp [data-testid="stButton"] > button[kind="primary"],
+    .stApp [data-testid="stFormSubmitButton"] > button[kind="primary"] {{
+        background:{'#29d3ff' if DARK else '#0b8fb3'} !important;
+        color:{'#04121d' if DARK else '#ffffff'} !important;
+        border-color:{'#29d3ff' if DARK else '#0b8fb3'} !important;
+    }}
+    .stApp input, .stApp textarea, .stApp [data-baseweb="input"], .stApp [data-baseweb="textarea"] {{
+        background:var(--input) !important;
+        color:var(--text) !important;
+        border-color:var(--control-border) !important;
+    }}
+    .stApp [data-baseweb="input"] > div, .stApp [data-baseweb="textarea"] > div {{
+        background:var(--input) !important;
+        border-color:var(--control-border) !important;
+    }}
+    .stApp [data-baseweb="input"] input, .stApp [data-baseweb="textarea"] textarea {{
+        background:transparent !important;
+        color:var(--text) !important;
+        caret-color:var(--accent) !important;
+    }}
+    .stApp [data-baseweb="input"] svg, .stApp [data-baseweb="textarea"] svg {{ color:var(--muted) !important; fill:var(--muted) !important; }}
+    .stApp [data-testid="stFileUploader"] section {{
+        background:var(--surface) !important;
+        border:1px dashed var(--control-border) !important;
+        color:var(--text) !important;
+    }}
+    .stApp [data-testid="stFileUploader"] section * {{ color:var(--text) !important; }}
+    .stApp [data-testid="stFileUploader"] button {{ background:var(--input) !important; color:var(--text) !important; }}
+    .stApp [data-testid="stCheckbox"] label, .stApp [data-testid="stToggle"] label, .stApp [data-testid="stRadio"] label {{ color:var(--text) !important; }}
+    .stApp [data-testid="stSlider"] [role="slider"] {{ background:var(--accent) !important; border-color:var(--accent) !important; }}
+    .stApp [data-testid="stSlider"] [data-baseweb="slider"] > div > div {{ background:var(--control-border) !important; }}
+    .stApp [data-testid="stProgressBar"] > div {{ background:var(--surface2) !important; }}
+    .stApp [data-testid="stProgressBar"] > div > div {{ background:var(--accent) !important; }}
+    .stApp [data-testid="stAlert"] {{
+        background:{'#10263a' if DARK else '#f7fbfd'} !important;
+        border:1px solid var(--border) !important;
+        color:var(--text) !important;
+    }}
+    .stApp [data-testid="stAlert"] p, .stApp [data-testid="stAlert"] span, .stApp [data-testid="stAlert"] div {{ color:var(--text) !important; }}
+    .stApp [data-testid="stMetric"] {{ background:var(--surface) !important; border-radius:10px; padding:8px; }}
+    .stApp [data-testid="stMetric"] [data-testid="stMetricValue"] {{ color:var(--text) !important; }}
+    .stApp [data-testid="stMetric"] [data-testid="stMetricDelta"] {{ color:var(--muted) !important; }}
+    .stApp hr {{ border-color:var(--border) !important; }}
+    .stApp code, .stApp pre {{ background:var(--code-bg) !important; color:var(--text) !important; border-color:var(--border) !important; }}
+    /* Plotly analytics: readable axes/values and visible zoom/download controls in both themes. */
+    .stApp .js-plotly-plot .plotly .modebar {{ background:var(--surface) !important; border:1px solid var(--border) !important; border-radius:8px; padding:3px !important; opacity:1 !important; }}
+    .stApp .js-plotly-plot .plotly .modebar-btn {{ background:transparent !important; color:var(--text) !important; opacity:1 !important; }}
+    .stApp .js-plotly-plot .plotly .modebar-btn svg {{ fill:var(--text) !important; color:var(--text) !important; }}
+    .stApp .js-plotly-plot .plotly .modebar-btn:hover {{ background:var(--input-hover) !important; }}
+    .stApp .js-plotly-plot .plotly .gtitle, .stApp .js-plotly-plot .plotly .xtitle, .stApp .js-plotly-plot .plotly .ytitle, .stApp .js-plotly-plot .plotly .xtick text, .stApp .js-plotly-plot .plotly .ytick text, .stApp .js-plotly-plot .plotly .legend text {{ fill:var(--text) !important; color:var(--text) !important; }}
+    .stApp .js-plotly-plot .plotly .gridlayer path {{ stroke:var(--border) !important; stroke-opacity:.55 !important; }}
+
+
+    .govbar {{ display:flex;align-items:center;justify-content:space-between;padding:10px 16px;border:1px solid var(--border);background:{'rgba(8,28,48,.9)' if DARK else 'rgba(255,255,255,.96)'};border-radius:10px;margin-bottom:10px; }}
+    .govbrand {{ display:flex;gap:12px;align-items:center; }}
+    .emblem {{ width:38px;height:38px;border-radius:50%;border:2px solid {'#d8e5ee' if DARK else '#6d8798'};display:grid;place-items:center;color:var(--text) !important; }}
+    .govtitle {{ font-weight:800;font-size:14px;color:var(--text) !important; }}
+    .govsub,.live {{ font-size:10px;color:var(--muted) !important; }}
+    .live {{ text-transform:uppercase;letter-spacing:.08em; }}
+    .dot {{ display:inline-block;width:8px;height:8px;border-radius:50%;background:#28d17c; }}
+    .ticker {{ overflow:hidden;white-space:nowrap;border:1px solid {'#53323a' if DARK else '#e2b8bd'};background:{'#1a1620' if DARK else '#fff3f3'};border-radius:8px;padding:8px 0;margin:8px 0 16px;color:{'#ffd5da' if DARK else '#7a2630'} !important;font-size:12px; }}
+    .ticker span {{ display:inline-block;padding-left:100%;animation:marquee 28s linear infinite; }}
+    @keyframes marquee {{ to {{ transform:translateX(-100%); }} }}
+    .kpi {{ background:linear-gradient(145deg,{'rgba(14,38,64,.96),rgba(7,23,40,.96)' if DARK else '#ffffff,#f1f6f9'});border:1px solid var(--border);border-radius:13px;padding:14px 16px;min-height:104px;box-shadow:0 12px 35px {'rgba(0,0,0,.18)' if DARK else 'rgba(33,64,84,.12)'};color:var(--text) !important; }}
+    .kpi .label {{ font-size:10px;color:var(--muted) !important;letter-spacing:.1em;font-weight:800; }}
+    .kpi .value {{ font-size:29px;font-weight:700;margin:6px 0;color:var(--text) !important; }}
+    .kpi .meta {{ font-size:11px;color:var(--muted) !important; }}
+    .kpi.red {{ border-color:{'#6b2935' if DARK else '#e0aeb5'}; }}
+    .kpi.cyan {{ border-color:{'#1a6276' if DARK else '#9bcfdd'}; }}
+    .kpi.amber {{ border-color:{'#6c5221' if DARK else '#d8c48a'}; }}
+    .panel {{ background:{'rgba(10,30,51,.82)' if DARK else 'rgba(255,255,255,.94)'};border:1px solid var(--border);border-radius:14px;padding:16px;box-shadow:0 10px 30px {'rgba(0,0,0,.16)' if DARK else 'rgba(33,64,84,.10)'};color:var(--text) !important; }}
+    .panel h3,.panel b,.panel p {{ color:var(--text) !important; }}
+    .eyebrow {{ font-size:10px;color:#29d3ff !important;font-weight:800;letter-spacing:.12em;text-transform:uppercase; }}
+    .small {{ font-size:11px;color:var(--muted) !important; }}
+    .riskbadge {{ display:inline-block;padding:5px 9px;border-radius:999px;font-size:10px;font-weight:800; }}
+    .CRITICAL {{ background:{'#541d28' if DARK else '#fde4e7'};color:{'#ff9da8' if DARK else '#a51f2d'} !important; }}
+    .HIGH {{ background:{'#4d3314' if DARK else '#fff0d4'};color:{'#ffc85e' if DARK else '#8a5a00'} !important; }}
+    .MODERATE {{ background:{'#463e13' if DARK else '#fff9d8'};color:{'#e9db68' if DARK else '#796a00'} !important; }}
+    .LOW {{ background:{'#123a2b' if DARK else '#dcf7e9'};color:{'#76e4ac' if DARK else '#197347'} !important; }}
+    .scanline {{ height:2px;background:linear-gradient(90deg,transparent,#29d3ff,transparent); }}
+    .mobile-preview-card {{ background:{'#071018' if DARK else '#ffffff'};border:1px solid {'#30485c' if DARK else '#c7d6df'};color:var(--text); }}
+    .mobile-preview-message {{ color:var(--text) !important; }}
+    .mobile-alert-card {{ background:{'#071018' if DARK else '#ffffff'};border:1px solid {'#30485c' if DARK else '#c7d6df'};box-shadow:0 16px 40px {'rgba(0,0,0,.30)' if DARK else 'rgba(33,64,84,.12)'};color:var(--text); }}
+    .mobile-alert-card .district-text {{ color:{'#b7c8d5' if DARK else '#506879'} !important; }}
+    .mobile-alert-card .message-text {{ color:{'#e8f1f8' if DARK else '#10202e'} !important; }}
+    .mobile-alert-card .advisory {{ background:{'#102a40' if DARK else '#eaf5fb'};color:{'#73dcff' if DARK else '#12647d'} !important; }}
+    .stApp [data-testid="stDataFrame"] {{ border:1px solid var(--border);border-radius:10px;overflow:hidden; }}
+
+    /* All app tables use the same theme as the rest of the dashboard. */
+    .theme-table-wrap, .risk-table-wrap {{ width:100%; overflow-x:auto; margin:8px 0 18px; border:1px solid var(--border); border-radius:12px; background:var(--table-row); }}
+    .theme-table, .risk-table {{ width:100%; min-width:760px; border-collapse:separate; border-spacing:0; table-layout:auto; background:var(--table-row) !important; color:var(--text) !important; font-size:13px; }}
+    .theme-table th, .risk-table th {{ position:sticky; top:0; z-index:1; padding:11px 12px; text-align:left; white-space:nowrap; font-weight:800; background:var(--table-head) !important; color:var(--text) !important; border-bottom:1px solid var(--border); }}
+    .theme-table td, .risk-table td {{ padding:10px 12px; white-space:nowrap; background:var(--table-row) !important; color:var(--text) !important; border-bottom:1px solid var(--border); }}
+    .theme-table tbody tr:nth-child(even) td, .risk-table tbody tr:nth-child(even) td {{ background:var(--table-row-alt) !important; }}
+    .theme-table tbody tr:hover td, .risk-table tbody tr:hover td {{ background:var(--table-hover) !important; }}
+    .theme-table tbody tr:last-child td, .risk-table tbody tr:last-child td {{ border-bottom:0; }}
+    .theme-status, .risk-cell {{ font-weight:800 !important; }}
+    .theme-status.CRITICAL, .risk-cell.CRITICAL {{ color:{'#ff9da8' if DARK else '#a51f2d'} !important; }}
+    .theme-status.HIGH, .risk-cell.HIGH {{ color:{'#ffc85e' if DARK else '#8a5a00'} !important; }}
+    .theme-status.MODERATE, .risk-cell.MODERATE {{ color:{'#e9db68' if DARK else '#796a00'} !important; }}
+    .theme-status.LOW, .risk-cell.LOW {{ color:{'#76e4ac' if DARK else '#197347'} !important; }}
+    .theme-status.LIVE {{ color:{'#76e4ac' if DARK else '#197347'} !important; }}
+    .theme-status.FALLBACK {{ color:{'#ffc85e' if DARK else '#8a5a00'} !important; }}
+    .theme-table-empty {{ padding:16px; border:1px solid var(--border); border-radius:12px; background:var(--surface); color:var(--muted) !important; }}
     </style>
-    """
+    """,
+    unsafe_allow_html=True,
 )
 
+def _theme_table_html(df):
+    """Render tables with explicit theme colors so they never inherit a black canvas."""
+    if df is None or df.empty:
+        return '<div class="theme-table-empty">No data available.</div>'
+    headers = ''.join(f'<th>{str(col)}</th>' for col in df.columns)
+    rows = []
+    for _, row in df.iterrows():
+        cells = []
+        for col, value in row.items():
+            if pd.isna(value):
+                text = "—"
+            elif isinstance(value, (float, np.floating)):
+                text = f"{float(value):.2f}"
+            else:
+                text = str(value)
+            cls = ''
+            if str(col).lower() in {"risk", "risk_level", "status", "severity"}:
+                upper = text.upper()
+                if upper in {"CRITICAL", "HIGH", "MODERATE", "LOW", "LIVE", "FALLBACK"}:
+                    cls = f' class="theme-status {upper}"'
+            cells.append(f'<td{cls}>{text}</td>')
+        rows.append('<tr>' + ''.join(cells) + '</tr>')
+    return (
+        '<div class="theme-table-wrap"><table class="theme-table">'
+        f'<thead><tr>{headers}</tr></thead><tbody>{"".join(rows)}</tbody>'
+        '</table></div>'
+    )
 
-def render_theme_css(theme):
-    """Render the global stylesheet for the active theme ('dark' or 'light')."""
-    colors = DARK_COLORS if theme == "dark" else LIGHT_COLORS
-    st.markdown(CSS_TEMPLATE.safe_substitute(colors), unsafe_allow_html=True)
-
-
-render_theme_css(st.session_state.theme)
+PLOTLY_THEME = "plotly_dark" if DARK else "plotly_white"
 
 
 # ------------------------------------------------------------
@@ -260,37 +426,124 @@ def local_prediction(f):
 
 
 
+def get_openweather_key():
+    """Find the OpenWeather key reliably from .env, Streamlit secrets, or env."""
+    def normalize(value):
+        value = clean(value)
+        # Accept .env values such as: OPENWEATHER_API_KEY="abc" or 'abc'
+        if len(value) >= 2 and value[0] == value[-1] and value[0] in {"'", '"'}:
+            value = value[1:-1].strip()
+        return value
+
+    invalid = {
+        "", "your_key", "your_openweather_key", "replace_me",
+        "your_api_key", "changeme", "none", "null", "undefined",
+    }
+
+    # 1) Read the project .env directly. This avoids depending on dotenv being
+    # loaded before Streamlit starts and avoids accidentally using an old OS key.
+    env_files = [
+        ROOT / ".env",
+        Path.cwd() / ".env",
+        Path.cwd().parent / ".env",
+        Path(__file__).resolve().parent.parent / ".env",
+    ]
+    seen = set()
+    for env_file in env_files:
+        try:
+            env_file = env_file.resolve()
+        except Exception:
+            continue
+        if env_file in seen or not env_file.is_file():
+            continue
+        seen.add(env_file)
+        try:
+            for raw_line in env_file.read_text(encoding="utf-8").splitlines():
+                line = raw_line.strip()
+                if not line or line.startswith("#") or "=" not in line:
+                    continue
+                name, value = line.split("=", 1)
+                name = name.strip()
+                value = value.strip()
+                if name in {"OPENWEATHER_API_KEY", "OPENWEATHER_KEY", "WEATHER_API_KEY"}:
+                    value = normalize(value)
+                    if value and value.lower() not in invalid:
+                        return value
+        except (OSError, UnicodeError):
+            pass
+
+    # 2) Streamlit secrets.
+    try:
+        for name in ("OPENWEATHER_API_KEY", "OPENWEATHER_KEY", "WEATHER_API_KEY"):
+            value = normalize(st.secrets.get(name, ""))
+            if value and value.lower() not in invalid:
+                return value
+    except Exception:
+        pass
+
+    # 3) Process environment.
+    for name in ("OPENWEATHER_API_KEY", "OPENWEATHER_KEY", "WEATHER_API_KEY"):
+        value = normalize(os.getenv(name, ""))
+        if value and value.lower() not in invalid:
+            return value
+
+    return ""
+
+
 @st.cache_data(ttl=600, show_spinner=False)
 def fetch_openweather(lat, lon, api_key):
-    """Fetch current weather plus 5-day / 3-hour forecast from OpenWeather."""
+    """Fetch current weather and the 5-day/3-hour forecast from OpenWeather."""
+    api_key = clean(api_key)
     if not api_key:
-        raise RuntimeError("OPENWEATHER_API_KEY is missing.")
+        raise RuntimeError(
+            "OPENWEATHER_API_KEY is not configured. Add it to .env or Streamlit secrets."
+        )
 
-    base_params = {
-        "lat": lat,
-        "lon": lon,
+    params = {
+        "lat": f"{float(lat):.4f}",
+        "lon": f"{float(lon):.4f}",
         "appid": api_key,
         "units": "metric",
     }
 
     session = requests.Session()
     session.verify = certifi.where()
+    session.headers.update({"User-Agent": "LandGuard-NER/1.0"})
 
-    current_response = session.get(
+    endpoints = (
         "https://api.openweathermap.org/data/2.5/weather",
-        params=base_params,
-        timeout=15,
-    )
-    current_response.raise_for_status()
-
-    forecast_response = session.get(
         "https://api.openweathermap.org/data/2.5/forecast",
-        params=base_params,
-        timeout=15,
     )
-    forecast_response.raise_for_status()
+    responses = []
 
-    return current_response.json(), forecast_response.json()
+    for endpoint in endpoints:
+        try:
+            response = session.get(endpoint, params=params, timeout=(5, 15))
+        except requests.exceptions.SSLError:
+            # certifi is the normal secure path. A clear error is preferable
+            # to silently disabling TLS verification.
+            raise
+        except requests.exceptions.RequestException:
+            raise
+
+        if response.status_code >= 400:
+            try:
+                payload = response.json()
+                message = payload.get("message", response.text)
+            except Exception:
+                message = response.text
+            error = requests.HTTPError(
+                f"OpenWeather HTTP {response.status_code}: {message}",
+                response=response,
+            )
+            raise error
+
+        try:
+            responses.append(response.json())
+        except ValueError as exc:
+            raise RuntimeError("OpenWeather returned an invalid JSON response.") from exc
+
+    return responses[0], responses[1]
 
 
 def openweather_error(exc):
@@ -336,6 +589,50 @@ def openweather_error(exc):
 
     return str(exc)
 
+
+def fetch_openmeteo(lat, lon):
+    """Keyless live-weather fallback using Open-Meteo when OpenWeather is unavailable."""
+    params = {
+        "latitude": float(lat),
+        "longitude": float(lon),
+        "current": "temperature_2m,relative_humidity_2m,precipitation,rain,wind_speed_10m",
+        "hourly": "precipitation,rain",
+        "forecast_days": 4,
+        "timezone": "UTC",
+    }
+    response = requests.get(
+        "https://api.open-meteo.com/v1/forecast",
+        params=params,
+        timeout=(5, 15),
+        headers={"User-Agent": "LandGuard-NER/1.0"},
+    )
+    response.raise_for_status()
+    data = response.json()
+    current = data.get("current") or {}
+    hourly = data.get("hourly") or {}
+    precipitation = hourly.get("precipitation") or []
+    rain = hourly.get("rain") or []
+
+    # The first hourly value is the current/nearest hour. Sum the next
+    # 24/72 hourly values for operational precipitation context.
+    rain_values = []
+    for i in range(max(len(precipitation), len(rain))):
+        p = float(precipitation[i] or 0.0) if i < len(precipitation) else 0.0
+        r = float(rain[i] or 0.0) if i < len(rain) else 0.0
+        rain_values.append(max(p, r))
+
+    return {
+        "timestamp": datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC"),
+        "rain_last_1h": round(float(current.get("rain") or current.get("precipitation") or 0.0), 1),
+        "rain_forecast24": round(sum(rain_values[:24]), 1),
+        "rain_forecast72": round(sum(rain_values[:72]), 1),
+        "moisture_pressure": round(float(current.get("relative_humidity_2m") or 0.0) * 0.85, 1),
+        "temperature": round(float(current.get("temperature_2m") or 0.0), 1),
+        "humidity": round(float(current.get("relative_humidity_2m") or 0.0), 0),
+        "wind_speed": round(float(current.get("wind_speed_10m") or 0.0), 1),
+        "source": "Open-Meteo",
+        "status": "LIVE",
+    }
 
 def parse_weather(current, forecast):
     """Convert OpenWeather responses into model-ready values."""
@@ -412,51 +709,65 @@ def live_weather_for_zone(district, state, lat, lon, seed):
     """Return a zone using live OpenWeather data, with explicit fallback."""
     fallback = demo_features(seed)
 
-    api_key = clean(os.getenv("OPENWEATHER_API_KEY"))
+    api_key = get_openweather_key()
 
-    if not api_key or api_key.lower() in {
-        "your_key",
-        "your_openweather_key",
-        "replace_me",
-    }:
-        prediction = local_prediction(fallback)
-        return {
-            "district": district,
-            "state": state,
-            "lat": lat,
-            "lon": lon,
-            "features": fallback,
-            **prediction,
-            "source": "DEMO FALLBACK",
-            "data_status": "FALLBACK",
-            "provider_error": "OPENWEATHER_API_KEY is missing from .env.",
-            "weather": {
-                "timestamp": "Unavailable",
-                "rain_last_1h": 0.0,
-                "rain_forecast24": round(fallback["rainfall24"], 1),
-                "rain_forecast72": round(fallback["rainfall72"], 1),
-                "moisture_pressure": round(fallback["soil"], 1),
-                "temperature": 24.0,
-                "humidity": 75.0,
-                "wind_speed": 12.0,
-                "source": "Deterministic demo fallback",
-                "status": "FALLBACK",
-            },
-        }
+    # Open-Meteo is the permanent keyless provider for this dashboard.
+    # Do not require, read, or display any OpenWeather API key.
+    if True:
+        # Live weather through Open-Meteo; no API key is required.
+        try:
+            weather = fetch_openmeteo(lat, lon)
+            features = dict(fallback)
+            features["rainfall24"] = weather["rain_forecast24"]
+            features["rainfall72"] = weather["rain_forecast72"]
+            features["soil"] = weather["moisture_pressure"]
+            prediction = local_prediction(features)
+            return {
+                "district": district,
+                "state": state,
+                "lat": lat,
+                "lon": lon,
+                "features": features,
+                **prediction,
+                "source": "Open-Meteo",
+                "data_status": "LIVE",
+                "provider_error": "",
+                "weather": weather,
+                "provider_note": "OpenWeather API key not configured; using Open-Meteo live weather.",
+            }
+        except Exception as exc:
+            prediction = local_prediction(fallback)
+            return {
+                "district": district,
+                "state": state,
+                "lat": lat,
+                "lon": lon,
+                "features": fallback,
+                **prediction,
+                "source": "DEMO FALLBACK",
+                "data_status": "FALLBACK",
+                "provider_error": f"Live weather unavailable: {exc}",
+                "weather": {
+                    "timestamp": "Unavailable",
+                    "rain_last_1h": 0.0,
+                    "rain_forecast24": round(fallback["rainfall24"], 1),
+                    "rain_forecast72": round(fallback["rainfall72"], 1),
+                    "moisture_pressure": round(fallback["soil"], 1),
+                    "temperature": 24.0,
+                    "humidity": 75.0,
+                    "wind_speed": 12.0,
+                    "source": "Deterministic demo fallback",
+                    "status": "FALLBACK",
+                },
+            }
 
     try:
-        current, forecast = fetch_openweather(
-            lat, lon, api_key
-        )
-        weather = parse_weather(current, forecast)
-
+        weather = fetch_openmeteo(lat, lon)
         features = dict(fallback)
         features["rainfall24"] = weather["rain_forecast24"]
         features["rainfall72"] = weather["rain_forecast72"]
         features["soil"] = weather["moisture_pressure"]
-
         prediction = local_prediction(features)
-
         return {
             "district": district,
             "state": state,
@@ -464,16 +775,13 @@ def live_weather_for_zone(district, state, lat, lon, seed):
             "lon": lon,
             "features": features,
             **prediction,
-            "source": "OpenWeather",
+            "source": "Open-Meteo",
             "data_status": "LIVE",
             "provider_error": "",
             "weather": weather,
         }
-
     except Exception as exc:
         prediction = local_prediction(fallback)
-        reason = openweather_error(exc)
-
         return {
             "district": district,
             "state": state,
@@ -483,7 +791,7 @@ def live_weather_for_zone(district, state, lat, lon, seed):
             **prediction,
             "source": "DEMO FALLBACK",
             "data_status": "FALLBACK",
-            "provider_error": reason,
+            "provider_error": f"Open-Meteo unavailable: {exc}",
             "weather": {
                 "timestamp": "Unavailable",
                 "rain_last_1h": 0.0,
@@ -647,9 +955,7 @@ def command_header(show_ticker=True):
     if show_ticker:
         alerts = get_alerts()
         text = "  •  ".join(
-            f"{html.escape(str(a.get('risk_level','ALERT')))} ALERT: "
-            f"{html.escape(str(a.get('district','NER')))} — "
-            f"{html.escape(str(a.get('message','Operational warning')))}"
+            f"{a.get('risk_level','ALERT')} ALERT: {a.get('district','NER')} — {a.get('message','Operational warning')}"
             for a in alerts[-5:]
         )
         if not text:
@@ -660,21 +966,16 @@ def command_header(show_ticker=True):
 st.sidebar.title("⛰️ LANDSLIDEGUARD NER")
 st.sidebar.caption("SIH 2026 • Problem 26001")
 
-is_light = st.sidebar.toggle(
-    "☀️ Bright mode",
-    value=(st.session_state.theme == "light"),
-    key="theme_toggle",
+st.sidebar.toggle(
+    "☀️ Bright mode" if DARK else "🌙 Dark mode",
+    key="dark_mode",
+    help="Switch the entire dashboard and map between dark and bright themes.",
 )
-new_theme = "light" if is_light else "dark"
-if new_theme != st.session_state.theme:
-    st.session_state.theme = new_theme
-    st.rerun()
 
 page = st.sidebar.radio(
     "COMMAND MODULES",
     ["Command Center", "AI Digital Twin", "Risk Map", "Field Intelligence", "Alert Center", "Mobile Alert Preview", "Analytics", "About"],
 )
-st.sidebar.divider()
 st.sidebar.divider()
 st.sidebar.success("● NER CONTROL FABRIC ONLINE")
 st.sidebar.caption("Alert gateway: direct email / SMTP")
@@ -695,11 +996,11 @@ if page == "Command Center":
 
     cols = st.columns(5)
     kpis = [
-        ("MONITORED ZONES", len(zones), "8-STATE REGIONAL WATCH", "cyan"),
-        ("HIGH / CRITICAL", sum(x in ("HIGH", "CRITICAL") for x in levels), "PRIORITY SURVEILLANCE", "red"),
-        ("CRITICAL", levels.count("CRITICAL"), "IMMEDIATE REVIEW", "red"),
-        ("FIELD REPORTS", len(incidents), "HUMAN VERIFICATION", "amber"),
-        ("ALERTS LOGGED", len(alerts), "AUDITABLE BROADCAST", "cyan"),
+        ("MONITORED ZONES", len(zones), "8-state regional watch", "cyan"),
+        ("HIGH / CRITICAL", sum(x in ("HIGH", "CRITICAL") for x in levels), "priority surveillance", "red"),
+        ("CRITICAL", levels.count("CRITICAL"), "immediate review", "red"),
+        ("FIELD REPORTS", len(incidents), "human verification", "amber"),
+        ("ALERTS LOGGED", len(alerts), "auditable broadcasts", "cyan"),
     ]
     for col, (lab, val, meta, cls) in zip(cols, kpis):
         col.markdown(f'<div class="kpi {cls}"><div class="label">{lab}</div><div class="value">{val}</div><div class="meta">{meta}</div></div>', unsafe_allow_html=True)
@@ -714,8 +1015,8 @@ if page == "Command Center":
         for z in zones
     ])
     st.markdown("### Regional situation board")
-    st.dataframe(df.sort_values("Priority", ascending=False), use_container_width=True, hide_index=True)
-    st.info("Decision principle: **HAZARD PROBABILITY × EXPOSURE = OPERATIONAL PRIORITY**.")
+    st.markdown(_theme_table_html(df.sort_values("Priority", ascending=False)), unsafe_allow_html=True)
+    st.info("Decision principle: **hazard probability × exposure = operational priority**.")
 
 # ------------------------------------------------------------
 # Digital Twin
@@ -747,7 +1048,7 @@ elif page == "AI Digital Twin":
     d.metric("OPERATIONAL PRIORITY", f'{p["operational_priority"]:.1f}/100')
     st.progress(min(p["risk_score"] / 100, 1))
     st.markdown("### Why is the AI worried?")
-    st.dataframe(pd.DataFrame(p["top_factors"]), use_container_width=True, hide_index=True)
+    st.markdown(_theme_table_html(pd.DataFrame(p["top_factors"])), unsafe_allow_html=True)
     st.info("Recommended action: " + p["recommended_action"])
 
 # ------------------------------------------------------------
@@ -758,8 +1059,8 @@ elif page == "Risk Map":
 
     st.title("🗺️ NER Multi-Layer Risk & Exposure Map")
     st.caption(
-        "Live OpenWeather conditions drive the precipitation and "
-        "moisture-pressure components of the prototype risk score."
+        "Live Open-Meteo conditions drive the precipitation and "
+        "moisture-pressure components of the prototype risk score. No API key required."
     )
 
     zones = build_live_zones()
@@ -774,9 +1075,10 @@ elif page == "Risk Map":
 
     with status_col:
         if live_count == len(zones):
+            sources = sorted({z.get("source", "Live weather") for z in zones})
             st.success(
-                f"🟢 LIVE OPENWEATHER DATA • {live_count}/{len(zones)} "
-                "districts updated"
+                f"🟢 LIVE WEATHER DATA • {live_count}/{len(zones)} districts updated • "
+                f"Provider: {', '.join(sources)}"
             )
         elif live_count:
             st.warning(
@@ -785,7 +1087,7 @@ elif page == "Risk Map":
             )
         else:
             st.error(
-                "🔴 OPENWEATHER UNAVAILABLE • "
+                "🔴 WEATHER UNAVAILABLE • "
                 "Showing deterministic fallback data"
             )
 
@@ -795,7 +1097,8 @@ elif page == "Risk Map":
             if z.get("provider_error")
         ]
         if errors:
-            st.caption(f"Provider detail: {errors[0]}")
+            st.caption(f"Weather detail: {errors[0]}")
+            # Open-Meteo needs no API key; never ask the user to configure one.
 
     with refresh_col:
         if st.button(
@@ -885,19 +1188,79 @@ elif page == "Risk Map":
         for z in zones
     ])
 
-    st.dataframe(
-        table,
-        use_container_width=True,
-        hide_index=True,
-    )
+    # Use a normal HTML table here. Streamlit's dataframe grid can inherit
+    # a dark canvas/background and make this table appear as a black block.
+    def _risk_table_html(df):
+        headers = ''.join(f'<th>{str(col)}</th>' for col in df.columns)
+        rows = []
+        for _, row in df.iterrows():
+            cells = []
+            for col, value in row.items():
+                text = str(value)
+                if isinstance(value, (float, np.floating)):
+                    text = f"{value:.1f}"
+                cls = ''
+                if col == "Risk":
+                    cls = f' class="risk-cell {text.upper()}"'
+                cells.append(f'<td{cls}>{text}</td>')
+            rows.append('<tr>' + ''.join(cells) + '</tr>')
+        body = ''.join(rows)
+        return f"""<div class=\"risk-table-wrap\">
+          <table class=\"risk-table\">
+            <thead><tr>{headers}</tr></thead>
+            <tbody>{body}</tbody>
+          </table>
+        </div>"""
+
+    st.markdown(_risk_table_html(table), unsafe_allow_html=True)
 
     st.markdown("### Interactive risk map")
 
+    map_col1, map_col2 = st.columns([1, 1])
+    with map_col1:
+        show_heat = st.toggle(
+            "🔥 Show heat-wave layer",
+            value=True,
+            key="show_heat_wave",
+            help="Highlights districts by current temperature. It is an operational heat-stress visualization, not an official heat-wave warning."
+        )
+    with map_col2:
+        st.caption("Heat layer: cool → warm → extreme based on current temperature")
+
+    # Permanent light basemap. The map stays light even when the dashboard theme changes.
+    map_tiles = "OpenStreetMap"
     m = folium.Map(
         location=[25.7, 92.5],
         zoom_start=6,
-        tiles="OpenStreetMap",
+        tiles=map_tiles,
+        control_scale=True,
+        prefer_canvas=True,
     )
+
+    # Heat-wave visualization. Folium's HeatMap renders a smooth intensity
+    # surface; temperature is normalized to a 20–45 °C operational range.
+    if show_heat:
+        from folium.plugins import HeatMap
+        heat_points = []
+        for z in zones:
+            temp = float(z["weather"]["temperature"])
+            intensity = float(np.clip((temp - 20.0) / 25.0, 0.05, 1.0))
+            heat_points.append([z["lat"], z["lon"], intensity])
+        HeatMap(
+            heat_points,
+            radius=55,
+            blur=38,
+            min_opacity=0.28,
+            max_zoom=7,
+            gradient={
+                0.20: "blue",
+                0.40: "cyan",
+                0.60: "yellow",
+                0.78: "orange",
+                0.90: "red",
+                1.00: "darkred",
+            },
+        ).add_to(m)
 
     colors = {
         "LOW": "green",
@@ -909,9 +1272,12 @@ elif page == "Risk Map":
     for z in zones:
         w = z["weather"]
 
+        popup_bg = "#0b2035" if DARK else "#ffffff"
+        popup_text = "#e8f1f8" if DARK else "#10202e"
+        popup_border = "#2a4a66" if DARK else "#c7d6df"
         popup = (
-            f"<div style='min-width:250px'>"
-            f"<b>{z['district']} — {z['state']}</b><br><br>"
+            f"<div style='min-width:250px;background:{popup_bg};color:{popup_text};padding:8px;border:1px solid {popup_border};border-radius:8px;font-family:Arial,sans-serif'>"
+            f"<b style='color:{popup_text}'>{z['district']} — {z['state']}</b><br><br>"
             f"<b>{w['status']} WEATHER DATA</b><br>"
             f"Updated: {w['timestamp']}<br>"
             f"Source: {w['source']}<br><br>"
@@ -1004,7 +1370,7 @@ elif page == "Field Intelligence":
     inc = get_incidents()
     st.markdown("### Recent reports")
     if inc:
-        st.dataframe(pd.DataFrame(inc), use_container_width=True, hide_index=True)
+        st.markdown(_theme_table_html(pd.DataFrame(inc)), unsafe_allow_html=True)
     else:
         st.info("No reports yet.")
 
@@ -1030,9 +1396,9 @@ elif page == "Alert Center":
             "Nepali": f"पहिरो चेतावनी — {level}। {district} वरपर पहिरोको जोखिम बढेको छ। आधिकारिक निर्देशन पालना गर्नुहोस्।",
         }
         msg = st.text_area("Broadcast message", templates[lang], height=120)
-        subject = st.text_input("Email subject", value=f"LANDSLIDE WARNING — {level} — {district}")
-        email_recipients = st.text_input("Email Recipients", placeholder="you@example.com, district-control@example.gov")
-        audit = st.checkbox("Audit Log", value=True)
+        email_recipients = st.text_input("Email recipients", placeholder="you@example.com, district-control@example.gov")
+        subject = st.text_input("Email subject", value=f"LandslideGuard NER — {level} alert for {district}")
+        audit = st.checkbox("Audit log", value=True)
 
         if st.button("AUTHORIZE & DISPATCH ALERT", type="primary"):
             recipients = [x.strip() for x in email_recipients.split(",") if x.strip()]
@@ -1061,10 +1427,10 @@ elif page == "Alert Center":
         preview = f'''
         <div class="panel"><div class="eyebrow">MOBILE RECIPIENT EXPERIENCE</div>
         <h3>Emergency notification preview</h3>
-        <div class="dark-card" style="padding:18px;margin-top:8px;max-width:330px">
+        <div class="mobile-preview-card" style="border-radius:28px;padding:18px;margin-top:8px;max-width:330px">
         <div class="small">NOW • STATE EOC</div>
         <div style="font-size:18px;font-weight:800;margin:8px 0">🚨 Landslide Warning</div>
-        <div style="font-size:12px;line-height:1.55">{templates[lang]}</div>
+        <div class="mobile-preview-message" style="font-size:12px;line-height:1.55">{templates[lang]}</div>
         <div class="riskbadge {level}" style="margin-top:12px">{level}</div></div>
         <p class="small">Email is the only delivery channel in this version. Configure SMTP to send real alerts.</p></div>'''
         st.markdown(preview, unsafe_allow_html=True)
@@ -1072,7 +1438,7 @@ elif page == "Alert Center":
     alerts = get_alerts()
     if alerts:
         st.markdown("### Broadcast audit trail")
-        st.dataframe(pd.DataFrame(alerts), use_container_width=True, hide_index=True)
+        st.markdown(_theme_table_html(pd.DataFrame(alerts)), unsafe_allow_html=True)
 
     st.markdown("### ✉️ Live Email Gateway")
     cfg = smtp_config()
@@ -1083,7 +1449,7 @@ elif page == "Alert Center":
     st.caption("This test sends directly through SMTP. No separate backend service is required.")
 
     live_email = st.text_input("Recipient email address", placeholder="your-email@example.com", key="live_email")
-    live_subject = st.text_input("Email subject", value="LandslideGuard NER — Test Alert", key="live_email_subject")
+    live_subject = st.text_input("Email subject", value="LandslideGuard NER — DEMO ALERT", key="live_subject")
     live_message = st.text_area(
         "Email message",
         value="LANDSLIDEGUARD NER: DEMO ALERT — Please follow official local disaster-management instructions.",
@@ -1113,17 +1479,17 @@ elif page == "Mobile Alert Preview":
 
     st.markdown("### Emergency notification feed")
     for a in reversed(alerts[-5:]):
-        lvl = html.escape(str(a.get("risk_level", "MODERATE")))
-        district = html.escape(str(a.get("district", "NER")))
-        created = html.escape(str(a.get("created_at", "NOW")))
-        message = html.escape(str(a.get("message", "Follow official emergency instructions.")))
+        lvl = a.get("risk_level", "MODERATE")
+        district = a.get("district", "NER")
+        created = a.get("created_at", "NOW")
+        message = a.get("message", "Follow official emergency instructions.")
         st.markdown(
-            '''<div class="dark-card" style="padding:18px;margin-top:8px;max-width:330px">
+            f'''<div class="mobile-alert-card" style="max-width:760px;border-radius:28px;padding:20px 22px;margin:0 0 16px">
             <div style="display:flex;justify-content:space-between;align-items:center"><span class="small">STATE EOC • {created}</span><span class="riskbadge {lvl}">{lvl}</span></div>
-            <div style="font-size:20px;font-weight:800;margin:14px 0 5px">🚨 Landslide Warning</div>
-            <div style="font-size:13px;color:#b7c8d5;font-weight:700;margin-bottom:10px">📍 {district}</div>
-            <div style="font-size:13px;line-height:1.65;color:#e8f1f8">{message}</div>
-            <div style="margin-top:16px;padding:10px 12px;border-radius:10px;background:#102a40;color:#73dcff;font-size:11px;font-weight:700">OPEN EMERGENCY ADVISORY ›</div>
+            <div style="font-size:20px;font-weight:800;margin:14px 0 5px;color:var(--text)">🚨 Landslide Warning</div>
+            <div class="district-text" style="font-size:13px;font-weight:700;margin-bottom:10px">📍 {district}</div>
+            <div class="message-text" style="font-size:13px;line-height:1.65">{message}</div>
+            <div class="advisory" style="margin-top:16px;padding:10px 12px;border-radius:10px;font-size:11px;font-weight:700">OPEN EMERGENCY ADVISORY ›</div>
             </div>''',
             unsafe_allow_html=True,
         )
@@ -1140,10 +1506,10 @@ elif page == "Mobile Alert Preview":
 elif page == "Analytics":
     command_header()
     st.title("📊 Resilience Analytics")
-    st.caption("Regional decision intelligence • live OpenWeather weather inputs + prototype terrain/exposure factors.")
+    st.caption("Regional decision intelligence • live Open-Meteo weather inputs + prototype terrain/exposure factors.")
 
     zones = build_demo_zones()
-    st.info("🟢 LIVE-WEATHER MODE • Analytics use OpenWeather precipitation/moisture-pressure inputs with prototype terrain/exposure factors.")
+    st.info("🟢 LIVE-WEATHER MODE • Analytics use Open-Meteo precipitation/moisture-pressure inputs with prototype terrain/exposure factors.")
 
     df = pd.DataFrame(zones)
     if df.empty:
@@ -1160,13 +1526,15 @@ elif page == "Analytics":
 
     a, b = st.columns(2)
     with a:
-        chart = px.bar(df.sort_values("risk_score", ascending=False), x="district", y="risk_score", color="risk_level", title="Hazard score by NER district")
-        chart.update_layout(height=390)
-        st.plotly_chart(chart, use_container_width=True)
+        chart = px.bar(df.sort_values("risk_score", ascending=False), x="district", y="risk_score", color="risk_level", title="Hazard score by NER district", template=PLOTLY_THEME, text="risk_score")
+        chart.update_traces(texttemplate="%{text:.1f}", textposition="outside", cliponaxis=False, hovertemplate="%{x}<br>Risk score: %{y:.1f}<extra></extra>")
+        chart.update_layout(height=430, paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)", font=dict(color="#e8f1f8" if DARK else "#10202e", size=13), legend=dict(font=dict(color="#e8f1f8" if DARK else "#10202e")), margin=dict(l=55,r=25,t=70,b=70), xaxis=dict(title="District", tickfont=dict(color="#e8f1f8" if DARK else "#10202e"), title_font=dict(color="#e8f1f8" if DARK else "#10202e")), yaxis=dict(title="Risk score", range=[0,105], tickfont=dict(color="#e8f1f8" if DARK else "#10202e"), title_font=dict(color="#e8f1f8" if DARK else "#10202e")))
+        st.plotly_chart(chart, use_container_width=True, config={"displaylogo": False, "displayModeBar": True, "modeBarButtonsToRemove": []})
     with b:
-        chart = px.scatter(df, x="risk_score", y="operational_priority", size="exposure_score", color="risk_level", hover_name="district", title="Hazard vs operational priority")
-        chart.update_layout(height=390)
-        st.plotly_chart(chart, use_container_width=True)
+        chart = px.scatter(df, x="risk_score", y="operational_priority", size="exposure_score", color="risk_level", hover_name="district", title="Hazard vs operational priority", template=PLOTLY_THEME, text="district")
+        chart.update_traces(textposition="top center", cliponaxis=False, hovertemplate="%{text}<br>Risk: %{x:.1f}<br>Priority: %{y:.1f}<extra></extra>")
+        chart.update_layout(height=430, paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)", font=dict(color="#e8f1f8" if DARK else "#10202e", size=13), legend=dict(font=dict(color="#e8f1f8" if DARK else "#10202e")), margin=dict(l=65,r=25,t=70,b=65), xaxis=dict(title="Risk score", range=[0,105], tickfont=dict(color="#e8f1f8" if DARK else "#10202e"), title_font=dict(color="#e8f1f8" if DARK else "#10202e")), yaxis=dict(title="Operational priority", range=[0,105], tickfont=dict(color="#e8f1f8" if DARK else "#10202e"), title_font=dict(color="#e8f1f8" if DARK else "#10202e")))
+        st.plotly_chart(chart, use_container_width=True, config={"displaylogo": False, "displayModeBar": True, "modeBarButtonsToRemove": []})
 
     c, d = st.columns(2)
     with c:
@@ -1175,13 +1543,15 @@ elif page == "Analytics":
             "24h rainfall (mm)": [z["features"]["rainfall24"] for z in zones],
             "risk_score": df["risk_score"],
         })
-        chart = px.bar(rainfall.sort_values("24h rainfall (mm)", ascending=False), x="district", y="24h rainfall (mm)", color="risk_score", title="Rainfall pressure across monitored districts")
-        chart.update_layout(height=350)
-        st.plotly_chart(chart, use_container_width=True)
+        chart = px.bar(rainfall.sort_values("24h rainfall (mm)", ascending=False), x="district", y="24h rainfall (mm)", color="risk_score", title="Rainfall pressure across monitored districts", template=PLOTLY_THEME, text="24h rainfall (mm)")
+        chart.update_traces(texttemplate="%{text:.1f}", textposition="outside", cliponaxis=False, hovertemplate="%{x}<br>Rainfall: %{y:.1f} mm<extra></extra>")
+        chart.update_layout(height=400, paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)", font=dict(color="#e8f1f8" if DARK else "#10202e", size=13), legend=dict(font=dict(color="#e8f1f8" if DARK else "#10202e")), margin=dict(l=60,r=25,t=70,b=70), xaxis=dict(title="District", tickfont=dict(color="#e8f1f8" if DARK else "#10202e"), title_font=dict(color="#e8f1f8" if DARK else "#10202e")), yaxis=dict(title="Rainfall (mm)", rangemode="tozero", tickfont=dict(color="#e8f1f8" if DARK else "#10202e"), title_font=dict(color="#e8f1f8" if DARK else "#10202e")))
+        st.plotly_chart(chart, use_container_width=True, config={"displaylogo": False, "displayModeBar": True, "modeBarButtonsToRemove": []})
     with d:
-        chart = px.scatter(df, x="exposure_score", y="operational_priority", color="risk_level", hover_name="district", title="Exposure-driven response priority")
-        chart.update_layout(height=350)
-        st.plotly_chart(chart, use_container_width=True)
+        chart = px.scatter(df, x="exposure_score", y="operational_priority", color="risk_level", hover_name="district", title="Exposure-driven response priority", template=PLOTLY_THEME, text="district")
+        chart.update_traces(textposition="top center", cliponaxis=False, hovertemplate="%{text}<br>Exposure: %{x:.1f}<br>Priority: %{y:.1f}<extra></extra>")
+        chart.update_layout(height=400, paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)", font=dict(color="#e8f1f8" if DARK else "#10202e", size=13), legend=dict(font=dict(color="#e8f1f8" if DARK else "#10202e")), margin=dict(l=65,r=25,t=70,b=65), xaxis=dict(title="Exposure score", range=[0,105], tickfont=dict(color="#e8f1f8" if DARK else "#10202e"), title_font=dict(color="#e8f1f8" if DARK else "#10202e")), yaxis=dict(title="Operational priority", range=[0,105], tickfont=dict(color="#e8f1f8" if DARK else "#10202e"), title_font=dict(color="#e8f1f8" if DARK else "#10202e")))
+        st.plotly_chart(chart, use_container_width=True, config={"displaylogo": False, "displayModeBar": True, "modeBarButtonsToRemove": []})
 
     st.markdown("### Decision intelligence")
     st.markdown(
@@ -1191,10 +1561,11 @@ elif page == "Analytics":
         'A moderately hazardous location can therefore become a higher response priority when more people, roads or critical assets are exposed.</p></div>',
         unsafe_allow_html=True,
     )
-    st.dataframe(
-        df[["district", "state", "risk_level", "risk_score", "confidence", "exposure_score", "operational_priority"]].sort_values("operational_priority", ascending=False),
-        use_container_width=True,
-        hide_index=True,
+    st.markdown(
+        _theme_table_html(
+            df[["district", "state", "risk_level", "risk_score", "confidence", "exposure_score", "operational_priority"]].sort_values("operational_priority", ascending=False)
+        ),
+        unsafe_allow_html=True,
     )
 
 # ------------------------------------------------------------
