@@ -1,3 +1,4 @@
+import html
 import os
 import re
 import smtplib
@@ -5,6 +6,7 @@ import ssl
 from datetime import datetime, timezone
 from email.message import EmailMessage
 from pathlib import Path
+from string import Template
 
 import certifi
 import folium
@@ -26,52 +28,140 @@ try:
 except Exception:
     pass
 
-
 st.set_page_config(
     page_title="LandslideGuard NER • State EOC",
     page_icon="🚨",
     layout="wide",
 )
 
-st.markdown(
+# ------------------------------------------------------------
+# Theme (Dark / Bright) — must be initialized before CSS renders
+# ------------------------------------------------------------
+if "theme" not in st.session_state:
+    st.session_state.theme = "dark"
+
+DARK_COLORS = {
+    "bg": "radial-gradient(circle at 78% 2%,#10365a 0,#071426 38%,#050e1b 100%)",
+    "root_bg": "#071426",
+    "text": "#e8f1f8",
+    "sidebar_bg": "linear-gradient(180deg,#061323,#091c31)",
+    "sidebar_border": "#1d3a57",
+    "govbar_border": "#1d3a57",
+    "govbar_bg": "rgba(8,28,48,.9)",
+    "emblem_border": "#d8e5ee",
+    "govsub": "#8fa9bd",
+    "live": "#a8c0d2",
+    "dot": "#28d17c",
+    "ticker_border": "#53323a",
+    "ticker_bg": "#1a1620",
+    "ticker_text": "#ffd5da",
+    "kpi_bg": "linear-gradient(145deg,rgba(14,38,64,.96),rgba(7,23,40,.96))",
+    "kpi_border": "#1d3a57",
+    "kpi_label": "#8fa9bd",
+    "kpi_meta": "#a6bbcb",
+    "kpi_red_border": "#6b2935",
+    "kpi_cyan_border": "#1a6276",
+    "kpi_amber_border": "#6c5221",
+    "panel_bg": "rgba(10,30,51,.82)",
+    "panel_border": "#1d3a57",
+    "input_bg": "#0a1e33",
+    "eyebrow": "#29d3ff",
+    "small": "#8fa9bd",
+    "critical_bg": "#541d28", "critical_text": "#ff9da8",
+    "high_bg": "#4d3314", "high_text": "#ffc85e",
+    "moderate_bg": "#463e13", "moderate_text": "#e9db68",
+    "low_bg": "#123a2b", "low_text": "#76e4ac",
+}
+
+LIGHT_COLORS = {
+    "bg": "radial-gradient(circle at 78% 2%,#eef4fa 0,#f7fafc 38%,#ffffff 100%)",
+    "root_bg": "#f7fafc",
+    "text": "#0f2233",
+    "sidebar_bg": "linear-gradient(180deg,#f3f7fb,#e7edf3)",
+    "sidebar_border": "#c7d6e3",
+    "govbar_border": "#c7d6e3",
+    "govbar_bg": "rgba(255,255,255,.92)",
+    "emblem_border": "#3a5a73",
+    "govsub": "#51677a",
+    "live": "#3d6580",
+    "dot": "#1f9d5c",
+    "ticker_border": "#e3b7bd",
+    "ticker_bg": "#fdeef0",
+    "ticker_text": "#8a2e3a",
+    "kpi_bg": "linear-gradient(145deg,rgba(255,255,255,.97),rgba(238,244,250,.97))",
+    "kpi_border": "#c7d6e3",
+    "kpi_label": "#51677a",
+    "kpi_meta": "#5b7185",
+    "kpi_red_border": "#d69aa6",
+    "kpi_cyan_border": "#8fd0e6",
+    "kpi_amber_border": "#e0c584",
+    "panel_bg": "rgba(255,255,255,.88)",
+    "panel_border": "#c7d6e3",
+    "input_bg": "#ffffff",
+    "eyebrow": "#0a7ea8",
+    "small": "#5b7185",
+    "critical_bg": "#fbdde1", "critical_text": "#8a1f30",
+    "high_bg": "#fbe7cd", "high_text": "#8a5a10",
+    "moderate_bg": "#f7f0c4", "moderate_text": "#6b5c0c",
+    "low_bg": "#d8f3e6", "low_text": "#14663f",
+}
+
+CSS_TEMPLATE = Template(
     """
     <style>
+    :root,.stApp{--text-color:$text;--background-color:$root_bg;--secondary-background-color:$panel_bg}
     html,body,[class*=css]{font-family:Inter,sans-serif}
-    .stApp{background:radial-gradient(circle at 78% 2%,#10365a 0,#071426 38%,#050e1b 100%);color:#e8f1f8}
+    .stApp{background:$bg;color:$text}
+    .stApp label,.stApp [data-testid="stWidgetLabel"] p,.stApp [data-testid="stCaptionContainer"] p,.stApp [data-testid="stMetricLabel"],.stApp [data-testid="stMetricValue"],.stApp [data-testid="stMetricDelta"],.stApp [data-testid="stAlertContentInfo"] p,.stApp [data-testid="stAlertContentWarning"] p,.stApp [data-testid="stAlertContentSuccess"] p,.stApp [data-testid="stAlertContentError"] p,.stApp button p,.stApp [data-baseweb="select"] div,.stApp [data-testid="stDataFrame"] *{color:$text !important}
+    .stApp [data-testid="stCheckbox"] p,.stApp [data-testid="stCheckbox"] span,.stApp [data-testid="stToggle"] p,.stApp [data-testid="stToggle"] span,.stApp [data-testid="stRadio"] p,.stApp [data-testid="stRadio"] span,.stApp [data-testid="stSlider"] div,.stApp [data-testid="stSlider"] span{color:$text !important}
+    .stApp [data-testid="stTextInput"] div[data-baseweb="input"],.stApp [data-testid="stNumberInput"] div[data-baseweb="input"],.stApp [data-testid="stNumberInput"] div[data-baseweb="base-input"],.stApp [data-testid="stDateInput"] div[data-baseweb="input"],.stApp [data-testid="stTimeInput"] div[data-baseweb="input"],.stApp [data-baseweb="select"]>div,.stApp [data-baseweb="base-input"]{background:$input_bg !important;border:1px solid $panel_border !important}
+    .stApp [data-testid="stTextInput"] input,.stApp [data-testid="stNumberInput"] input,.stApp [data-testid="stDateInput"] input,.stApp [data-testid="stTimeInput"] input,.stApp [data-baseweb="select"] *,.stApp [data-baseweb="input"] input,.stApp input{color:$text !important;background:transparent !important;-webkit-text-fill-color:$text !important}
+    .stApp textarea,.stApp [data-testid="stTextArea"] textarea{background:$input_bg !important;color:$text !important;border:1px solid $panel_border !important;-webkit-text-fill-color:$text !important}
+    .stApp [data-testid="stNumberInput"] button,.stApp [data-testid="stNumberInputStepUp"],.stApp [data-testid="stNumberInputStepDown"]{background:$input_bg !important;color:$text !important;border-color:$panel_border !important}
+    .stApp [data-testid="stFileUploaderDropzone"],.stApp [data-testid="stFileUploader"] section{background:$input_bg !important;border:1px dashed $panel_border !important}
+    .stApp [data-testid="stFileUploaderDropzone"] *,.stApp [data-testid="stFileUploader"] section *{color:$text !important}
+    .stApp [data-testid="stFileUploaderDropzoneInstructions"] svg{fill:$text !important}
+    div[data-baseweb="popover"] [data-baseweb="menu"],div[data-baseweb="popover"] li,div[data-baseweb="popover"] ul{background:$input_bg !important;color:$text !important}
+    div[data-baseweb="popover"] li:hover{background:$panel_bg !important}
     .block-container{padding-top:1rem;max-width:1500px}
     h1,h2,h3{font-family:"Space Grotesk",sans-serif}
-    section[data-testid=stSidebar]{background:linear-gradient(180deg,#061323,#091c31);border-right:1px solid #1d3a57}
-    .govbar{display:flex;align-items:center;justify-content:space-between;padding:10px 16px;border:1px solid #1d3a57;background:rgba(8,28,48,.9);border-radius:10px;margin-bottom:10px}
-    .govbrand{display:flex;gap:12px;align-items:center}.emblem{width:38px;height:38px;border-radius:50%;border:2px solid #d8e5ee;display:grid;place-items:center}
-    .govtitle{font-weight:800;font-size:14px}.govsub{font-size:10px;color:#8fa9bd}.live{font-size:10px;color:#a8c0d2;text-transform:uppercase;letter-spacing:.08em}
-    .dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:#28d17c}
-    .ticker{overflow:hidden;white-space:nowrap;border:1px solid #53323a;background:#1a1620;border-radius:8px;padding:8px 0;margin:8px 0 16px;color:#ffd5da;font-size:12px}
+    section[data-testid=stSidebar]{background:$sidebar_bg;border-right:1px solid $sidebar_border}
+    section[data-testid=stSidebar] h1,section[data-testid=stSidebar] h2,section[data-testid=stSidebar] h3,section[data-testid=stSidebar] p,section[data-testid=stSidebar] label,section[data-testid=stSidebar] span{color:$text !important}
+    .govbar{display:flex;align-items:center;justify-content:space-between;padding:10px 16px;border:1px solid $govbar_border;background:$govbar_bg;border-radius:10px;margin-bottom:10px}
+    .govbrand{display:flex;gap:12px;align-items:center}.emblem{width:38px;height:38px;border-radius:50%;border:2px solid $emblem_border;display:grid;place-items:center}
+    .govtitle{font-weight:800;font-size:14px;color:$text}.govsub{font-size:10px;color:$govsub}.live{font-size:10px;color:$live;text-transform:uppercase;letter-spacing:.08em}
+    .dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:$dot}
+    .ticker{overflow:hidden;white-space:nowrap;border:1px solid $ticker_border;background:$ticker_bg;border-radius:8px;padding:8px 0;margin:8px 0 16px;color:$ticker_text;font-size:12px}
     .ticker span{display:inline-block;padding-left:100%;animation:marquee 28s linear infinite}@keyframes marquee{to{transform:translateX(-100%)}}
-    .kpi{background:linear-gradient(145deg,rgba(14,38,64,.96),rgba(7,23,40,.96));border:1px solid #1d3a57;border-radius:13px;padding:14px 16px;min-height:104px;box-shadow:0 12px 35px rgba(0,0,0,.18)}
-    .kpi .label{font-size:10px;color:#8fa9bd;letter-spacing:.1em;font-weight:800}.kpi .value{font-size:29px;font-weight:700;margin:6px 0}.kpi .meta{font-size:11px;color:#a6bbcb}
-    .kpi.red{border-color:#6b2935}.kpi.cyan{border-color:#1a6276}.kpi.amber{border-color:#6c5221}
-    .panel{background:rgba(10,30,51,.82);border:1px solid #1d3a57;border-radius:14px;padding:16px;box-shadow:0 10px 30px rgba(0,0,0,.16)}
-    .eyebrow{font-size:10px;color:#29d3ff;font-weight:800;letter-spacing:.12em;text-transform:uppercase}.small{font-size:11px;color:#8fa9bd}
+    .kpi{background:$kpi_bg;border:1px solid $kpi_border;border-radius:13px;padding:14px 16px;min-height:104px;box-shadow:0 12px 35px rgba(0,0,0,.18)}
+    .kpi .label{font-size:10px;color:$kpi_label;letter-spacing:.1em;font-weight:800}.kpi .value{font-size:29px;font-weight:700;margin:6px 0;color:$text}.kpi .meta{font-size:11px;color:$kpi_meta}
+    .kpi.red{border-color:$kpi_red_border}.kpi.cyan{border-color:$kpi_cyan_border}.kpi.amber{border-color:$kpi_amber_border}
+    .panel{background:$panel_bg;border:1px solid $panel_border;border-radius:14px;padding:16px;box-shadow:0 10px 30px rgba(0,0,0,.16)}
+    .panel,.panel b,.panel p{color:$text}
+    .eyebrow{font-size:10px;color:$eyebrow;font-weight:800;letter-spacing:.12em;text-transform:uppercase}.small{font-size:11px;color:$small}
     .riskbadge{display:inline-block;padding:5px 9px;border-radius:999px;font-size:10px;font-weight:800}
-    .CRITICAL{background:#541d28;color:#ff9da8}.HIGH{background:#4d3314;color:#ffc85e}.MODERATE{background:#463e13;color:#e9db68}.LOW{background:#123a2b;color:#76e4ac}
-    .scanline{height:2px;background:linear-gradient(90deg,transparent,#29d3ff,transparent)}
-    /* Keep Streamlit form text readable in both dark and bright modes. */
-    [data-testid="stWidgetLabel"] p, [data-testid="stWidgetLabel"] label,
-    .stTextInput label, .stTextArea label, .stSelectbox label,
-    .stNumberInput label, .stSlider label, .stFileUploader label,
-    .stRadio label, .stCheckbox label {color:#e8f1f8 !important}
-    .stTextInput input, .stTextArea textarea, .stNumberInput input,
-    .stSelectbox [data-baseweb="select"] > div,
-    .stFileUploader section, .stFileUploader section div {
-        color:#e8f1f8 !important;
-        background-color:#0d2238 !important;
-        border-color:#2d4b66 !important;
-    }
-    .stTextInput input::placeholder, .stTextArea textarea::placeholder {color:#9fb1c1 !important}
+    .CRITICAL{background:$critical_bg;color:$critical_text}.HIGH{background:$high_bg;color:$high_text}.MODERATE{background:$moderate_bg;color:$moderate_text}.LOW{background:$low_bg;color:$low_text}
+    .scanline{height:2px;background:linear-gradient(90deg,transparent,$eyebrow,transparent)}
+    header[data-testid="stHeader"]{background:transparent}
+    .dark-card{background:#071018;color:#e8f1f8;border:1px solid #30485c;border-radius:28px}
+    .dark-card .small{color:#8fa9bd}
+    .dark-card .riskbadge.CRITICAL{background:#541d28;color:#ff9da8}
+    .dark-card .riskbadge.HIGH{background:#4d3314;color:#ffc85e}
+    .dark-card .riskbadge.MODERATE{background:#463e13;color:#e9db68}
+    .dark-card .riskbadge.LOW{background:#123a2b;color:#76e4ac}
     </style>
-    """,
-    unsafe_allow_html=True,
+    """
 )
+
+
+def render_theme_css(theme):
+    """Render the global stylesheet for the active theme ('dark' or 'light')."""
+    colors = DARK_COLORS if theme == "dark" else LIGHT_COLORS
+    st.markdown(CSS_TEMPLATE.safe_substitute(colors), unsafe_allow_html=True)
+
+
+render_theme_css(st.session_state.theme)
+
 
 # ------------------------------------------------------------
 # Demo data: these make Analytics and Mobile Preview NEVER empty.
@@ -557,7 +647,9 @@ def command_header(show_ticker=True):
     if show_ticker:
         alerts = get_alerts()
         text = "  •  ".join(
-            f"{a.get('risk_level','ALERT')} ALERT: {a.get('district','NER')} — {a.get('message','Operational warning')}"
+            f"{html.escape(str(a.get('risk_level','ALERT')))} ALERT: "
+            f"{html.escape(str(a.get('district','NER')))} — "
+            f"{html.escape(str(a.get('message','Operational warning')))}"
             for a in alerts[-5:]
         )
         if not text:
@@ -565,54 +657,24 @@ def command_header(show_ticker=True):
         st.markdown(f'<div class="ticker"><span>🚨 LIVE ALERT FEED &nbsp; {text}</span></div>', unsafe_allow_html=True)
 
 
-# Persist UI state explicitly so changing the display mode does not send the
-# user back to the first module after Streamlit reruns the script.
-if "current_page" not in st.session_state:
-    st.session_state.current_page = "Command Center"
-if "bright_mode" not in st.session_state:
-    st.session_state.bright_mode = False
-
 st.sidebar.title("⛰️ LANDSLIDEGUARD NER")
 st.sidebar.caption("SIH 2026 • Problem 26001")
-st.sidebar.toggle("☀️ Bright mode", key="bright_mode")
 
-# Bright-mode overrides: only presentation colours are changed.
-if st.session_state.bright_mode:
-    st.markdown(
-        """
-        <style>
-        .stApp{background:#f4f7fb !important;color:#17283a !important}
-        section[data-testid="stSidebar"]{background:#ffffff !important;border-right:1px solid #d7e0e8 !important}
-        section[data-testid="stSidebar"] *{color:#17283a !important}
-        .govbar,.panel,.kpi{background:#ffffff !important;border-color:#cbd8e4 !important;color:#17283a !important}
-        .govtitle,.kpi .value,h1,h2,h3{color:#17283a !important}
-        .govsub,.live,.small,.kpi .label,.kpi .meta{color:#52677a !important}
-        .stMarkdown,.stCaption,.stText,.stAlert{color:#17283a !important}
-        [data-testid="stWidgetLabel"] p, [data-testid="stWidgetLabel"] label,
-        .stTextInput label, .stTextArea label, .stSelectbox label,
-        .stNumberInput label, .stSlider label, .stFileUploader label,
-        .stRadio label, .stCheckbox label{color:#17283a !important}
-        .stTextInput input,.stTextArea textarea,.stNumberInput input,
-        .stSelectbox [data-baseweb="select"] > div,
-        .stFileUploader section,.stFileUploader section div{
-            color:#17283a !important;background:#ffffff !important;border-color:#aebdca !important
-        }
-        .stTextInput input::placeholder,.stTextArea textarea::placeholder{color:#6b7f90 !important}
-        </style>
-        """, unsafe_allow_html=True,
-    )
+is_light = st.sidebar.toggle(
+    "☀️ Bright mode",
+    value=(st.session_state.theme == "light"),
+    key="theme_toggle",
+)
+new_theme = "light" if is_light else "dark"
+if new_theme != st.session_state.theme:
+    st.session_state.theme = new_theme
+    st.rerun()
 
-page_options = [
-    "Command Center", "AI Digital Twin", "Risk Map", "Field Intelligence",
-    "Alert Center", "Mobile Alert Preview", "Analytics", "About",
-]
 page = st.sidebar.radio(
     "COMMAND MODULES",
-    page_options,
-    index=page_options.index(st.session_state.current_page),
-    key="current_page",
+    ["Command Center", "AI Digital Twin", "Risk Map", "Field Intelligence", "Alert Center", "Mobile Alert Preview", "Analytics", "About"],
 )
-st.session_state.current_page = page
+st.sidebar.divider()
 st.sidebar.divider()
 st.sidebar.success("● NER CONTROL FABRIC ONLINE")
 st.sidebar.caption("Alert gateway: direct email / SMTP")
@@ -633,11 +695,11 @@ if page == "Command Center":
 
     cols = st.columns(5)
     kpis = [
-        ("MONITORED ZONES", len(zones), "8-state regional watch", "cyan"),
-        ("HIGH / CRITICAL", sum(x in ("HIGH", "CRITICAL") for x in levels), "priority surveillance", "red"),
-        ("CRITICAL", levels.count("CRITICAL"), "immediate review", "red"),
-        ("FIELD REPORTS", len(incidents), "human verification", "amber"),
-        ("ALERTS LOGGED", len(alerts), "auditable broadcasts", "cyan"),
+        ("MONITORED ZONES", len(zones), "8-STATE REGIONAL WATCH", "cyan"),
+        ("HIGH / CRITICAL", sum(x in ("HIGH", "CRITICAL") for x in levels), "PRIORITY SURVEILLANCE", "red"),
+        ("CRITICAL", levels.count("CRITICAL"), "IMMEDIATE REVIEW", "red"),
+        ("FIELD REPORTS", len(incidents), "HUMAN VERIFICATION", "amber"),
+        ("ALERTS LOGGED", len(alerts), "AUDITABLE BROADCAST", "cyan"),
     ]
     for col, (lab, val, meta, cls) in zip(cols, kpis):
         col.markdown(f'<div class="kpi {cls}"><div class="label">{lab}</div><div class="value">{val}</div><div class="meta">{meta}</div></div>', unsafe_allow_html=True)
@@ -653,7 +715,7 @@ if page == "Command Center":
     ])
     st.markdown("### Regional situation board")
     st.dataframe(df.sort_values("Priority", ascending=False), use_container_width=True, hide_index=True)
-    st.info("Decision principle: **hazard probability × exposure = operational priority**.")
+    st.info("Decision principle: **HAZARD PROBABILITY × EXPOSURE = OPERATIONAL PRIORITY**.")
 
 # ------------------------------------------------------------
 # Digital Twin
@@ -968,9 +1030,9 @@ elif page == "Alert Center":
             "Nepali": f"पहिरो चेतावनी — {level}। {district} वरपर पहिरोको जोखिम बढेको छ। आधिकारिक निर्देशन पालना गर्नुहोस्।",
         }
         msg = st.text_area("Broadcast message", templates[lang], height=120)
-        email_recipients = st.text_input("Email recipients", placeholder="you@example.com, district-control@example.gov")
-        subject = st.text_input("Email subject", value=f"LandslideGuard NER — {level} alert for {district}")
-        audit = st.checkbox("Audit log", value=True)
+        subject = st.text_input("Email subject", value=f"LANDSLIDE WARNING — {level} — {district}")
+        email_recipients = st.text_input("Email Recipients", placeholder="you@example.com, district-control@example.gov")
+        audit = st.checkbox("Audit Log", value=True)
 
         if st.button("AUTHORIZE & DISPATCH ALERT", type="primary"):
             recipients = [x.strip() for x in email_recipients.split(",") if x.strip()]
@@ -999,7 +1061,7 @@ elif page == "Alert Center":
         preview = f'''
         <div class="panel"><div class="eyebrow">MOBILE RECIPIENT EXPERIENCE</div>
         <h3>Emergency notification preview</h3>
-        <div style="background:#071018;border:1px solid #30485c;border-radius:28px;padding:18px;margin-top:8px;max-width:330px">
+        <div class="dark-card" style="padding:18px;margin-top:8px;max-width:330px">
         <div class="small">NOW • STATE EOC</div>
         <div style="font-size:18px;font-weight:800;margin:8px 0">🚨 Landslide Warning</div>
         <div style="font-size:12px;line-height:1.55">{templates[lang]}</div>
@@ -1021,7 +1083,7 @@ elif page == "Alert Center":
     st.caption("This test sends directly through SMTP. No separate backend service is required.")
 
     live_email = st.text_input("Recipient email address", placeholder="your-email@example.com", key="live_email")
-    live_subject = st.text_input("Email subject", value="LandslideGuard NER — DEMO ALERT", key="live_subject")
+    live_subject = st.text_input("Email subject", value="LandslideGuard NER — Test Alert", key="live_email_subject")
     live_message = st.text_area(
         "Email message",
         value="LANDSLIDEGUARD NER: DEMO ALERT — Please follow official local disaster-management instructions.",
@@ -1050,20 +1112,13 @@ elif page == "Mobile Alert Preview":
         st.info("🟡 DEMO NOTIFICATION • No live broadcasts yet — showing realistic emergency alerts so this module is never empty.")
 
     st.markdown("### Emergency notification feed")
-    for idx, a in enumerate(reversed(alerts[-5:])):
-        # Guard against old/demo records that contain literal template tokens
-        # such as {district} or {message}. They should never reach the citizen UI.
-        fallback = DEMO_ALERTS[idx % len(DEMO_ALERTS)]
-        lvl = a.get("risk_level", fallback.get("risk_level", "MODERATE"))
-        district = a.get("district")
-        if not district or str(district).strip() in {"{district}", "district"}:
-            district = fallback["district"]
-        created = a.get("created_at", fallback.get("created_at", "NOW"))
-        message = a.get("message")
-        if not message or str(message).strip() in {"{message}", "message"}:
-            message = fallback["message"]
+    for a in reversed(alerts[-5:]):
+        lvl = html.escape(str(a.get("risk_level", "MODERATE")))
+        district = html.escape(str(a.get("district", "NER")))
+        created = html.escape(str(a.get("created_at", "NOW")))
+        message = html.escape(str(a.get("message", "Follow official emergency instructions.")))
         st.markdown(
-            f'''<div style="max-width:760px;background:#071018;border:1px solid #30485c;border-radius:28px;padding:20px 22px;margin:0 0 16px;box-shadow:0 16px 40px rgba(0,0,0,.30)">
+            '''<div class="dark-card" style="padding:18px;margin-top:8px;max-width:330px">
             <div style="display:flex;justify-content:space-between;align-items:center"><span class="small">STATE EOC • {created}</span><span class="riskbadge {lvl}">{lvl}</span></div>
             <div style="font-size:20px;font-weight:800;margin:14px 0 5px">🚨 Landslide Warning</div>
             <div style="font-size:13px;color:#b7c8d5;font-weight:700;margin-bottom:10px">📍 {district}</div>
